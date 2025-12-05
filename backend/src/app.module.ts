@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -29,10 +29,10 @@ import { AuthService } from './modules/auth/auth.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'sqlite' as const,
-        database: ':memory:',
+        database: configService.get<string>('database.database') || './data/tradingpool.db',
         entities: [UserEntity, PoolEntity, InvestmentEntity, WithdrawalEntity],
-        synchronize: true,
-        logging: false,
+        synchronize: configService.get<boolean>('database.synchronize') !== false,
+        logging: configService.get<boolean>('database.logging') || false,
       }),
     }),
 
@@ -68,10 +68,25 @@ import { AuthService } from './modules/auth/auth.service';
   ],
 })
 export class AppModule implements OnModuleInit {
+  private readonly logger = new Logger('AppModule');
+  
   constructor(private authService: AuthService) {}
 
   async onModuleInit() {
-    // Seed admin user on startup
-    await this.authService.seedAdminUser();
+    this.logger.log('🔧 Initialisation de l\'application...');
+    
+    // Seed admin user (non-blocking avec timeout)
+    try {
+      const seedPromise = this.authService.seedAdminUser();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Seed timeout')), 5000)
+      );
+      
+      await Promise.race([seedPromise, timeoutPromise]);
+      this.logger.log('✅ Admin user vérifié/créé avec succès');
+    } catch (error) {
+      this.logger.warn('⚠️ Seed admin timeout ou erreur (continuera en arrière-plan):', error.message);
+      // Continue startup même si le seed échoue
+    }
   }
 }

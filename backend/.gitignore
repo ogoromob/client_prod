@@ -42,3 +42,11 @@ coverage/
 *.tmp
 .cache/
 .temp/
+
+# Database
+data/
+*.db
+*.sqlite
+
+# Environment
+.env
