@@ -13,6 +13,7 @@ import { PoolModule } from './modules/pool/pool.module';
 import { InvestmentModule } from './modules/investment/investment.module';
 import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
 import { AuthService } from './modules/auth/auth.service';
 
 @Module({
@@ -48,6 +49,7 @@ import { AuthService } from './modules/auth/auth.service';
     InvestmentModule,
     WithdrawalModule,
     AdminModule,
+    WebhookModule,
   ],
   providers: [
     // Global Exception Filter
