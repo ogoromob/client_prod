@@ -1,0 +1,21 @@
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+import * as compression from 'compression';
+
+@Injectable()
+export class CompressionMiddleware implements NestMiddleware {
+  private compressionHandler = compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+    level: 6, // Balance between speed and compression ratio
+    threshold: 1024, // Only compress responses > 1KB
+  });
+
+  use(req: Request, res: Response, next: NextFunction) {
+    this.compressionHandler(req, res, next);
+  }
+}
