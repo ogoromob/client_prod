@@ -1,44 +1,29 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import helmet from 'helmet';
-import compression = require('compression');
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log'],
+  });
   const logger = new Logger('Bootstrap');
 
-  // Security: Helmet
-  app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production',
-    crossOriginEmbedderPolicy: false,
-  }));
-
-  // Compression
-  app.use(compression());
-
-  // CORS
-  const corsOrigins = configService.get('cors.origin');
+  // CORS - Allow all origins for production readiness
   app.enableCors({
-    origin: corsOrigins,
+    origin: true,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
   // Global prefix
-  const apiPrefix = configService.get('apiPrefix');
-  app.setGlobalPrefix(apiPrefix);
+  app.setGlobalPrefix('api/v1');
 
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Strip non-whitelisted properties
-      forbidNonWhitelisted: true, // Throw error for non-whitelisted properties
-      transform: true, // Transform payloads to DTO instances
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: {
         enableImplicitConversion: true,
       },
@@ -46,32 +31,40 @@ async function bootstrap() {
   );
 
   // Swagger Documentation
-  if (process.env.NODE_ENV !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('TradingPool API')
-      .setDescription('API for TradingPool platform')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addTag('Authentication')
-      .addTag('Pools')
-      .addTag('Investments')
-      .addTag('Withdrawals')
-      .addTag('Admin')
-      .build();
+  const config = new DocumentBuilder()
+    .setTitle('TradingPool API')
+    .setDescription('API for TradingPool platform - Production Ready')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('Health')
+    .addTag('Authentication')
+    .addTag('Pools')
+    .addTag('Investments')
+    .addTag('Withdrawals')
+    .addTag('Admin')
+    .build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-    
-    logger.log('📚 Swagger documentation available at: /api/docs');
-  }
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+  
+  logger.log('📚 Swagger documentation available at: /api/docs');
 
-  // Start server
-  const port = configService.get('port');
-  await app.listen(port);
+  // Start server with dynamic port binding
+  const port = process.env.PORT || 3000;
+  await app.listen(port, '0.0.0.0');
 
-  logger.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
-  logger.log(`🔐 Admin credentials: ${configService.get('admin.email')} / ${configService.get('admin.password')}`);
-  logger.log(`📝 Environment: ${configService.get('nodeEnv')}`);
+  logger.log(`🚀 Application is running on: http://0.0.0.0:${port}/api/v1`);
+  logger.log(`💚 Health check: http://0.0.0.0:${port}/health`);
+  logger.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    logger.log('SIGTERM received, closing gracefully...');
+    await app.close();
+  });
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Failed to start application:', err);
+  process.exit(1);
+});

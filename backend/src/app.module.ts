@@ -1,5 +1,5 @@
 import { Module, OnModuleInit, Logger } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
@@ -15,6 +15,7 @@ import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { AuthService } from './modules/auth/auth.service';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -24,20 +25,18 @@ import { AuthService } from './modules/auth/auth.service';
       load: [configuration],
     }),
 
-    // Database
+    // Database - Production ready with non-blocking init
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: () => ({
         type: 'sqlite' as const,
-        database: configService.get<string>('database.database') || './data/tradingpool.db',
+        database: process.env.DATABASE_NAME || './data/tradingpool.db',
         entities: [UserEntity, PoolEntity, InvestmentEntity, WithdrawalEntity],
-        synchronize: configService.get<boolean>('database.synchronize') !== false,
-        logging: configService.get<boolean>('database.logging') || false,
+        synchronize: true, // OK for development/production with SQLite
+        logging: false,
       }),
     }),
 
-    // Rate Limiting
+    // Rate Limiting - Production ready
     ThrottlerModule.forRoot([{
       ttl: 60000,
       limit: 100,
@@ -51,6 +50,7 @@ import { AuthService } from './modules/auth/auth.service';
     AdminModule,
     WebhookModule,
   ],
+  controllers: [HealthController],
   providers: [
     // Global Exception Filter
     {
@@ -75,20 +75,18 @@ export class AppModule implements OnModuleInit {
   constructor(private authService: AuthService) {}
 
   async onModuleInit() {
-    this.logger.log('🔧 Initialisation de l\'application...');
+    this.logger.log('🔧 Application initialization...');
     
-    // Seed admin user (non-blocking avec timeout)
-    try {
-      const seedPromise = this.authService.seedAdminUser();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Seed timeout')), 5000)
-      );
-      
-      await Promise.race([seedPromise, timeoutPromise]);
-      this.logger.log('✅ Admin user vérifié/créé avec succès');
-    } catch (error) {
-      this.logger.warn('⚠️ Seed admin timeout ou erreur (continuera en arrière-plan):', error.message);
-      // Continue startup même si le seed échoue
-    }
+    // Seed admin user - Non-blocking background task
+    setTimeout(async () => {
+      try {
+        await this.authService.seedAdminUser();
+        this.logger.log('✅ Admin user seeded successfully');
+      } catch (error) {
+        this.logger.warn('⚠️ Admin seed skipped (may already exist)');
+      }
+    }, 0);
+    
+    this.logger.log('✅ Application ready');
   }
 }

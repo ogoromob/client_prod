@@ -1,0 +1,53 @@
+services:
+  # Backend Service (NestJS API)
+  - type: web
+    name: tradingpool-backend
+    env: node
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_NAME
+        value: ./data/tradingpool.db
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: MASTER_ENCRYPTION_KEY
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: sesshomaru@admin.com
+      - key: ADMIN_PASSWORD
+        value: inyasha
+      - key: ADMIN_USERNAME
+        value: sesshomaru
+
+  # Frontend Service (React Static Site)
+  - type: web
+    name: tradingpool-frontend
+    env: static
+    region: singapore
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://tradingpool-backend.onrender.com/api/v1
+      - key: VITE_WS_URL
+        value: wss://tradingpool-backend.onrender.com
+      - key: VITE_MOCK_MODE
+        value: false
+      - key: VITE_API_TIMEOUT
+        value: 90000

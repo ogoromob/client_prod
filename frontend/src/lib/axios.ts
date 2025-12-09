@@ -1,16 +1,32 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axiosRetry from 'axios-retry';
 import { toast } from 'sonner';
 
 // Configuration de base
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 90000; // 90 seconds for cold start
 
 // Créer instance Axios
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: API_TIMEOUT,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+  },
+});
+
+// Configure automatic retry for network errors and 5xx errors
+axiosRetry(axiosInstance, {
+  retries: 3,
+  retryDelay: (retryCount) => {
+    return retryCount * 2000; // 2s, 4s, 6s
+  },
+  retryCondition: (error) => {
+    // Retry on network errors or 5xx server errors
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) || 
+           (error.response?.status ? error.response.status >= 500 : false);
   },
 });
 
