@@ -1,0 +1,62 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Trigger Render deployment
+        run: |
+          echo "✅ Code pushed to main - Render will auto-deploy"
+          echo "📍 Backend: https://tradingpool-backend.onrender.com"
+          echo "📍 Frontend: https://tradingpool-frontend.onrender.com"
+          echo "📚 API Docs: https://tradingpool-backend.onrender.com/api/docs"
+      
+      - name: Wait for deployment
+        run: sleep 60
+      
+      - name: Health check backend
+        run: |
+          for i in {1..10}; do
+            if curl -f https://tradingpool-backend.onrender.com/health; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            echo "⏳ Waiting for backend... (attempt $i/10)"
+            sleep 30
+          done
+          echo "❌ Backend health check failed"
+          exit 1
+      
+      - name: Health check frontend
+        run: |
+          if curl -f https://tradingpool-frontend.onrender.com; then
+            echo "✅ Frontend is healthy"
+          else
+            echo "⚠️ Frontend health check failed"
+            exit 1
+          fi
+      
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "🎉 Deployment successful!"
+          echo ""
+          echo "📍 URLs:"
+          echo "  - Frontend: https://tradingpool-frontend.onrender.com"
+          echo "  - Backend API: https://tradingpool-backend.onrender.com/api/v1"
+          echo "  - API Docs: https://tradingpool-backend.onrender.com/api/docs"
+          echo ""
+          echo "🔐 Admin Login:"
+          echo "  - Email: sesshomaru@admin.com"
+          echo "  - Password: inyasha"
