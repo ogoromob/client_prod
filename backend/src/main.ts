@@ -9,9 +9,9 @@ async function bootstrap() {
   });
   const logger = new Logger('Bootstrap');
 
-  // CORS - Allow all origins for production readiness
+  // CORS - Whitelist frontend origin for production
   app.enableCors({
-    origin: true,
+    origin: 'https://tradingpool-frontend.onrender.com',
     credentials: true,
   });
 
