@@ -2,12 +2,19 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
   const logger = new Logger('Bootstrap');
+
+  // Security Headers
+  app.use(helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false,
+  }));
 
   // CORS - Allow all origins for production readiness
   app.enableCors({

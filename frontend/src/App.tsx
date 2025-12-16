@@ -13,6 +13,7 @@ import {
   Home, TrendingUp, Wallet, LogOut, Shield, Users, 
   DollarSign, Activity, AlertCircle, CheckCircle, Clock, X, Menu
 } from 'lucide-react'
+import { ServerStatus } from './components/ui/ServerStatus'
 
 // Protected Route Component
 function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
@@ -45,6 +46,7 @@ function PublicLayout() {
         </div>
       </nav>
       <Outlet />
+      <ServerStatus />
     </div>
   )
 }
@@ -111,6 +113,7 @@ function InvestorLayout() {
           <Outlet />
         </div>
       </main>
+      <ServerStatus />
     </div>
   )
 }
@@ -177,6 +180,7 @@ function AdminLayout() {
           <Outlet />
         </div>
       </main>
+      <ServerStatus />
     </div>
   )
 }
