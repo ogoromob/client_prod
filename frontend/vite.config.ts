@@ -21,11 +21,30 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['lucide-react', 'sonner'],
+        manualChunks: (id) => {
+          // Core React libraries
+          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            return 'react-vendor';
+          }
+          // UI libraries
+          if (id.includes('lucide-react') || id.includes('sonner')) {
+            return 'ui-vendor';
+          }
+          // Animation libraries
+          if (id.includes('framer-motion')) {
+            return 'animation-vendor';
+          }
+          // Charts and visualizations
+          if (id.includes('recharts') || id.includes('d3')) {
+            return 'charts-vendor';
+          }
+          // State management and data fetching
+          if (id.includes('zustand') || id.includes('@tanstack/react-query') || id.includes('axios')) {
+            return 'state-vendor';
+          }
         },
       },
     },

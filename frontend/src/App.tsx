@@ -1,14 +1,17 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { MainLayout } from './components/layouts/MainLayout'
-import { DashboardPage } from './pages/DashboardPage'
-import { LoginPage } from './pages/LoginPage'
-import { PoolsExplorerPage } from './pages/PoolsExplorerPage'
-import { PoolDetailPage } from './pages/PoolDetailPage'
+import { LoadingSpinner } from './components/LoadingSpinner'
 
-// A placeholder for the protected route logic
+// Lazy load pages for better performance
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })))
+const PoolsExplorerPage = lazy(() => import('./pages/PoolsExplorerPage').then(m => ({ default: m.PoolsExplorerPage })))
+const PoolDetailPage = lazy(() => import('./pages/PoolDetailPage').then(m => ({ default: m.PoolDetailPage })))
+
+// Protected route component with real authentication check
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  // For now, we will assume the user is authenticated to show the new layout.
-  const isAuthenticated = true; 
+  const isAuthenticated = Boolean(localStorage.getItem('accessToken'));
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -19,33 +22,35 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      
-      {/* All protected routes go within this wrapper */}
-      <Route 
-        path="/"
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="pools" element={<PoolsExplorerPage />} />
-        <Route path="pools/:id" element={<PoolDetailPage />} />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-dark-900"><LoadingSpinner size="lg" /></div>}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
         
-        {/* 
-          Other pages can be added here later.
-          For example:
-          <Route path="admin" element={<AdminDashboardPage />} />
-        */}
-      </Route>
+        {/* All protected routes go within this wrapper */}
+        <Route 
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="pools" element={<PoolsExplorerPage />} />
+          <Route path="pools/:id" element={<PoolDetailPage />} />
+          
+          {/* 
+            Other pages can be added here later.
+            For example:
+            <Route path="admin" element={<AdminDashboardPage />} />
+          */}
+        </Route>
 
-      {/* Catch-all redirects to the main dashboard */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Catch-all redirects to the main dashboard */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
 
