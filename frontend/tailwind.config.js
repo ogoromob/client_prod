@@ -1,4 +1,4 @@
-import { colors } from './src/theme/colors';
+import { designTokens } from './src/theme/tokens';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -10,9 +10,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        ...colors,
-        // Keep the old brand colors for now to avoid breaking things,
-        // but they should be phased out.
+        ...designTokens.colors,
+        // Keep the old brand colors for backward compatibility
         brand: {
           'bg-main': '#0a0e17',
           'bg-card': '#111827',
@@ -24,47 +23,41 @@ export default {
           'border': '#1e293b',
         },
       },
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        display: ['Poppins', 'sans-serif'],
-      },
+      fontFamily: designTokens.typography.fontFamily,
+      fontSize: designTokens.typography.fontSize,
+      fontWeight: designTokens.typography.fontWeight,
+      lineHeight: designTokens.typography.lineHeight,
+      letterSpacing: designTokens.typography.letterSpacing,
+      spacing: designTokens.spacing,
+      borderRadius: designTokens.borderRadius,
+      boxShadow: designTokens.shadows,
+      zIndex: designTokens.zIndex,
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-in-out',
-        'slide-up': 'slideUp 0.4s ease-out',
-        // Keep old animations
+        'fade-in': `fadeIn ${designTokens.transitions.duration.normal} ${designTokens.transitions.timing['ease-in-out']}`,
+        'slide-up': `slideUp ${designTokens.transitions.duration.slow} ${designTokens.transitions.timing['ease-out']}`,
+        'slide-down': `slideDown ${designTokens.transitions.duration.normal} ${designTokens.transitions.timing['ease-out']}`,
+        'scale-in': `scaleIn ${designTokens.transitions.duration.normal} ${designTokens.transitions.timing.spring}`,
+        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shimmer': 'shimmer 2s linear infinite',
         'glow': 'glow 2s ease-in-out infinite',
-        'slide-down': 'slideDown 0.3s ease-out',
         'bounce-subtle': 'bounceSubtle 2s ease-in-out infinite',
+        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        // Keep old keyframes
-        shimmer: {
-          '0%': { backgroundPosition: '-1000px 0' },
-          '100%': { backgroundPosition: '1000px 0' },
-        },
+        ...designTokens.animations,
+        // Additional custom keyframes
         glow: {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0.5 },
-        },
-        slideDown: {
-          '0%': { transform: 'translateY(-10px)', opacity: 0 },
-          '100%': { transform: 'translateY(0)', opacity: 1 },
+          '0%, 100%': { opacity: '1', boxShadow: '0 0 20px rgba(14, 165, 233, 0.5)' },
+          '50%': { opacity: '0.8', boxShadow: '0 0 40px rgba(14, 165, 233, 0.8)' },
         },
         bounceSubtle: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
         },
       },
+      transitionDuration: designTokens.transitions.duration,
+      transitionTimingFunction: designTokens.transitions.timing,
       backgroundImage: {
         'grid-pattern': "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")",
       },
