@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { MainLayout } from './components/layouts/MainLayout'
+import { AdminLayout } from './components/layouts/AdminLayout'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
 // Lazy load pages for better performance
@@ -8,6 +9,9 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ de
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const PoolsExplorerPage = lazy(() => import('./pages/PoolsExplorerPage').then(m => ({ default: m.PoolsExplorerPage })))
 const PoolDetailPage = lazy(() => import('./pages/PoolDetailPage').then(m => ({ default: m.PoolDetailPage })))
+
+// Admin pages
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })))
 
 // Protected route component with real authentication check
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -26,7 +30,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         
-        {/* All protected routes go within this wrapper */}
+        {/* Investor routes */}
         <Route 
           path="/"
           element={
@@ -39,12 +43,20 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="pools" element={<PoolsExplorerPage />} />
           <Route path="pools/:id" element={<PoolDetailPage />} />
-          
-          {/* 
-            Other pages can be added here later.
-            For example:
-            <Route path="admin" element={<AdminDashboardPage />} />
-          */}
+        </Route>
+
+        {/* Admin routes */}
+        <Route 
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          {/* More admin routes will be added here */}
         </Route>
 
         {/* Catch-all redirects to the main dashboard */}
