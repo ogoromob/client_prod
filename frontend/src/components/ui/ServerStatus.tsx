@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
-import { API_URL } from '../../services/api';
+import { BASE_URL as API_URL } from '@/lib/axios';
 
 export function ServerStatus() {
   const [status, setStatus] = useState<'online' | 'offline' | 'checking'>('checking');

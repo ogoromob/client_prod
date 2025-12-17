@@ -4,7 +4,7 @@ import axiosRetry from 'axios-retry';
 import { toast } from 'sonner';
 
 // Configuration de base
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 90000; // 90 seconds for cold start
 
 // Créer instance Axios
