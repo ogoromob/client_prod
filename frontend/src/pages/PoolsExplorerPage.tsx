@@ -123,7 +123,13 @@ export function PoolsExplorerPage() {
           <Button
             key={status}
             variant={filter === status ? 'default' : 'outline'}
-            onClick={() => setFilter(status as keyof typeof POOL_STATUS | 'ALL')}
+            onClick={() => {
+              if (status === 'ALL') {
+                setFilter('ALL');
+              } else {
+                setFilter(status as keyof typeof POOL_STATUS);
+              }
+            }}
           >
             {status === 'ALL' ? 'Tous' : POOL_STATUS[status as keyof typeof POOL_STATUS]}
           </Button>
