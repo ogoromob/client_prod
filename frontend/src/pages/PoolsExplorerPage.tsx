@@ -125,7 +125,7 @@ export function PoolsExplorerPage() {
             variant={filter === status ? 'default' : 'outline'}
             onClick={() => setFilter(status as keyof typeof POOL_STATUS | 'ALL')}
           >
-            {status === 'ALL' ? 'Tous' : POOL_STATUS[status]}
+            {status === 'ALL' ? 'Tous' : POOL_STATUS[status as keyof typeof POOL_STATUS]}
           </Button>
         ))}
       </motion.div>
