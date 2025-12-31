@@ -1,10 +1,47 @@
 import { designTokens } from './src/theme/tokens';
+import forms from '@tailwindcss/forms';
+import typography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx}",
+    "./src/components/**/*.{js,ts,jsx,tsx}",
+  ],
+  safelist: [
+    // Dark theme colors - critical for layout
+    'bg-dark-950',
+    'bg-dark-900',
+    'bg-dark-800',
+    'bg-dark-700',
+    'text-gray-200',
+    'text-gray-300',
+    'text-gray-400',
+    'text-gray-500',
+    'border-gray-800',
+    'border-gray-700',
+    'bg-dark-900/50',
+    'bg-dark-800/50',
+    // Primary colors
+    'bg-primary-500',
+    'text-primary-500',
+    'border-primary-500',
+    'focus:ring-primary-500',
+    'focus:border-primary-500',
+    // Status colors
+    'bg-success',
+    'bg-error',
+    'bg-warning',
+    'text-success',
+    'text-error',
+    'text-warning',
+    // Utility patterns
+    { pattern: /^bg-dark-/, variants: ['hover', 'focus'] },
+    { pattern: /^text-gray-/, variants: ['hover', 'focus'] },
+    { pattern: /^border-gray-/, variants: ['hover', 'focus'] },
+    { pattern: /^text-primary-/, variants: ['hover', 'focus'] },
   ],
   darkMode: 'class',
   theme: {
@@ -64,7 +101,7 @@ export default {
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
+    forms,
+    typography,
   ],
 }
