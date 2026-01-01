@@ -24,12 +24,23 @@ async function bootstrap() {
   }));
 
   // CORS - Restrict to specific origins
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(',');
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000,https://tradingpool-frontend.onrender.com').split(',').map(o => o.trim());
+  
+  logger.log(`✅ CORS allowed origins: ${allowedOrigins.join(', ')}`);
+  
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests without origin (like mobile apps or curl)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        logger.warn(`❌ CORS rejected origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },

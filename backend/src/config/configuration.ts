@@ -25,7 +25,7 @@ export default () => {
     apiPrefix: process.env.API_PREFIX || 'api/v1',
     
     cors: {
-      origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'],
+      origin: (process.env.CORS_ORIGIN || 'http://localhost:5173,https://tradingpool-frontend.onrender.com').split(',').map(o => o.trim()),
       credentials: true,
     },
     
