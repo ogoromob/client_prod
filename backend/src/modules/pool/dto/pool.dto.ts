@@ -1,6 +1,6 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsArray, Min, Max, IsDateString } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsEnum, IsArray, Min, Max, IsDateString, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { RiskLevel } from '../../../database/entities';
+import { RiskLevel, ModelType } from '../../../database/entities';
 
 export class CreatePoolDto {
   @ApiProperty()
@@ -76,6 +76,47 @@ export class CreatePoolDto {
   @IsOptional()
   @IsNumber()
   takeProfit?: number;
+
+  @ApiProperty({ enum: ModelType })
+  @IsEnum(ModelType)
+  modelType: ModelType;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(100)
+  maxInvestmentPerUser: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(1000)
+  maxInvestmentPerAdmin: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(10000)
+  poolHardCap: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(1)
+  @Max(365)
+  durationDays: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(1)
+  @Max(50)
+  maxDailyDrawdown: number;
+
+  @ApiProperty({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  isReinvestDefault?: boolean;
+
+  @ApiProperty({ default: 2 })
+  @IsOptional()
+  @IsNumber()
+  subscriptionFee?: number;
 }
 
 export class UpdatePoolDto {
@@ -128,4 +169,46 @@ export class UpdatePoolDto {
   @IsOptional()
   @IsEnum(RiskLevel)
   riskLevel?: RiskLevel;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(100)
+  maxInvestmentPerUser?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(1000)
+  maxInvestmentPerAdmin?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(10000)
+  poolHardCap?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(365)
+  durationDays?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(50)
+  maxDailyDrawdown?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  isReinvestDefault?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  subscriptionFee?: number;
 }
