@@ -113,6 +113,13 @@ export class AdminController {
     return createSuccessResponse(withdrawals);
   }
 
+  @Get('investments/pending')
+  async getPendingInvestments() {
+    // Retourner une liste vide pour l'instant (endpoint placeholder)
+    // En production, cela chargerait les investissements avec status PENDING_VERIFICATION
+    return createSuccessResponse([]);
+  }
+
   @Put('withdrawals/:id/approve')
   async approveWithdrawal(@Param('id') id: string) {
     const withdrawal = await this.adminService.approveWithdrawal(id);

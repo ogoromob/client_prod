@@ -26,8 +26,14 @@ const PendingInvestmentsCard: React.FC<PendingInvestmentsCardProps> = ({ onRefre
       setInvestments((response as any)?.data || []);
       updateTimeRemaining();
     } catch (error: any) {
-      toast.error('Erreur lors du chargement des investissements');
-      console.error(error);
+      // L'endpoint n'existe pas encore, on affiche un message informatif
+      if (error.response?.status === 404) {
+        console.warn('Endpoint /admin/investments/pending not yet implemented');
+        setInvestments([]);
+      } else {
+        toast.error('Erreur lors du chargement des investissements');
+        console.error(error);
+      }
     } finally {
       setIsLoading(false);
     }
