@@ -16,6 +16,9 @@ import { AdminModule } from './modules/admin/admin.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { EventsModule } from './modules/events/events.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { SecurityModule } from './modules/security/security.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { AuthService } from './modules/auth/auth.service';
 import { HealthController } from './health.controller';
 
@@ -53,6 +56,9 @@ import { HealthController } from './health.controller';
     WebhookModule,
     EventsModule,
     SchedulerModule,
+    AuditModule,
+    SecurityModule,
+    SettingsModule,
   ],
   controllers: [HealthController],
   providers: [

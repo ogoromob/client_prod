@@ -240,39 +240,66 @@ export class AuthService {
     return sanitized;
   }
 
-  // Seed admin user on startup
+  // Seed test users on startup
   async seedAdminUser() {
     try {
-      const adminEmail = this.configService.get('admin.email');
-      const adminPassword = this.configService.get('admin.password');
+      // Create Super Admin
+      const superAdminEmail = 'admin@tradingpool.com';
+      const superAdminPassword = 'SuperAdmin@2024';
       
-      if (!adminEmail || !adminPassword) {
-        throw new Error('Admin email or password not configured');
-      }
-
-      const existingAdmin = await this.userRepository.findOne({
-        where: { email: adminEmail },
+      const existingSuperAdmin = await this.userRepository.findOne({
+        where: { email: superAdminEmail },
       });
 
-      if (!existingAdmin) {
-        const passwordHash = await bcrypt.hash(adminPassword, 12);
-
-        const admin = this.userRepository.create({
-          email: adminEmail,
+      if (!existingSuperAdmin) {
+        const passwordHash = await bcrypt.hash(superAdminPassword, 12);
+        const superAdmin = this.userRepository.create({
+          email: superAdminEmail,
           passwordHash,
-          role: UserRole.ADMIN,
+          role: UserRole.SUPER_ADMIN,
           mfaEnabled: false,
           kycStatus: KycStatus.APPROVED,
+          hasActiveSubscription: true,
+          subscriptionExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          totalInvestedAmount: 0,
         });
-
-        await this.userRepository.save(admin);
-        console.log('✅ Admin user created successfully');
-        return { message: 'Admin user created successfully', email: adminEmail };
-      } else {
-        return { message: 'Admin user already exists', email: adminEmail };
+        await this.userRepository.save(superAdmin);
+        console.log('✅ Super Admin created: admin@tradingpool.com / SuperAdmin@2024');
       }
+
+      // Create Regular User
+      const userEmail = 'investor@tradingpool.com';
+      const userPassword = 'Investor@2024';
+      
+      const existingUser = await this.userRepository.findOne({
+        where: { email: userEmail },
+      });
+
+      if (!existingUser) {
+        const passwordHash = await bcrypt.hash(userPassword, 12);
+        const user = this.userRepository.create({
+          email: userEmail,
+          passwordHash,
+          role: UserRole.INVESTOR,
+          mfaEnabled: false,
+          kycStatus: KycStatus.APPROVED,
+          hasActiveSubscription: true,
+          subscriptionExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          totalInvestedAmount: 0,
+        });
+        await this.userRepository.save(user);
+        console.log('✅ Investor created: investor@tradingpool.com / Investor@2024');
+      }
+
+      return { 
+        message: 'Test users seeded successfully',
+        accounts: [
+          { email: superAdminEmail, password: superAdminPassword, role: 'SUPER_ADMIN' },
+          { email: userEmail, password: userPassword, role: 'INVESTOR' }
+        ]
+      };
     } catch (error) {
-      console.error('❌ Error seeding admin user:', error);
+      console.error('❌ Error seeding users:', error);
       throw error;
     }
   }
