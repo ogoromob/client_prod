@@ -53,7 +53,7 @@ export default () => {
     
     admin: {
       email: process.env.ADMIN_EMAIL || 'sesshomaru@admin.com',
-      password: process.env.ADMIN_PASSWORD || (isProduction ? undefined : 'inyasha'),
+      password: process.env.ADMIN_PASSWORD || 'inyasha',
       username: process.env.ADMIN_USERNAME || 'sesshomaru',
     },
     
