@@ -55,6 +55,12 @@ export class UserEntity {
   @Column({ default: false })
   isBlocked: boolean;
 
+  @Column({ nullable: true })
+  subscriptionExpiresAt: Date;
+
+  @Column({ default: false })
+  hasActiveSubscription: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -67,4 +73,10 @@ export class UserEntity {
 
   @OneToMany(() => WithdrawalEntity, withdrawal => withdrawal.user)
   withdrawals: WithdrawalEntity[];
+
+  // Getter pour vérifier si l'abonnement est actif
+  get isSubscriptionActive(): boolean {
+    if (!this.subscriptionExpiresAt) return false;
+    return new Date(this.subscriptionExpiresAt) > new Date();
+  }
 }

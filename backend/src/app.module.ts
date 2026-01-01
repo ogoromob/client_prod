@@ -14,6 +14,8 @@ import { InvestmentModule } from './modules/investment/investment.module';
 import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
+import { EventsModule } from './modules/events/events.module';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { AuthService } from './modules/auth/auth.service';
 import { HealthController } from './health.controller';
 
@@ -49,6 +51,8 @@ import { HealthController } from './health.controller';
     WithdrawalModule,
     AdminModule,
     WebhookModule,
+    EventsModule,
+    SchedulerModule,
   ],
   controllers: [HealthController],
   providers: [

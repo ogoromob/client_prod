@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 import { ModelWebhookDto, WebhookEventType } from './dto/webhook.dto';
 import { PoolEntity } from '../../database/entities';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class WebhookService {
@@ -14,6 +15,7 @@ export class WebhookService {
     @InjectRepository(PoolEntity)
     private poolRepository: Repository<PoolEntity>,
     private configService: ConfigService,
+    private eventsGateway: EventsGateway,
   ) {}
 
   /**
@@ -76,8 +78,8 @@ export class WebhookService {
       `Trade executed for pool ${pool.id}: ${tradeData.side} ${tradeData.quantity} ${tradeData.symbol} @ ${tradeData.price}`
     );
 
-    // TODO: Store trade in database (create Trade entity if needed)
-    // TODO: Broadcast to connected WebSocket clients
+    // Broadcast to connected WebSocket clients
+    this.eventsGateway.broadcastTradeExecuted(pool.id, tradeData);
 
     return {
       success: true,
@@ -103,7 +105,8 @@ export class WebhookService {
     pool.metadata = metadata;
     await this.poolRepository.save(pool);
 
-    // TODO: Broadcast to connected WebSocket clients
+    // Broadcast to connected WebSocket clients
+    this.eventsGateway.broadcastPositionUpdate(pool.id, positions);
 
     return {
       success: true,
@@ -126,8 +129,8 @@ export class WebhookService {
     pool.currentAmount = pnlData.totalValue;
     await this.poolRepository.save(pool);
 
-    // TODO: Update investor investments P&L
-    // TODO: Broadcast to connected WebSocket clients
+    // Broadcast to connected WebSocket clients
+    this.eventsGateway.broadcastPnLUpdate(pool.id, pnlData);
 
     return {
       success: true,
@@ -155,7 +158,8 @@ export class WebhookService {
 
     await this.poolRepository.save(pool);
 
-    // TODO: Broadcast to connected WebSocket clients
+    // Broadcast to connected WebSocket clients
+    this.eventsGateway.broadcastPoolUpdate(pool.id, updateData);
 
     return {
       success: true,

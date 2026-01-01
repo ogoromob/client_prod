@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InvestmentEntity, InvestmentStatus, PoolEntity, PoolStatus } from '../../database/entities';
+import { InvestmentEntity, InvestmentStatus, PoolEntity, PoolStatus, UserEntity } from '../../database/entities';
 import { CreateInvestmentDto } from './dto/investment.dto';
 
 @Injectable()
@@ -11,9 +11,24 @@ export class InvestmentService {
     private investmentRepository: Repository<InvestmentEntity>,
     @InjectRepository(PoolEntity)
     private poolRepository: Repository<PoolEntity>,
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
   ) {}
 
   async create(createDto: CreateInvestmentDto, userId: string): Promise<InvestmentEntity> {
+    // 1. Vérifier l'abonnement de l'utilisateur
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    if (!user.isSubscriptionActive) {
+      throw new ForbiddenException(
+        'Abonnement requis. Veuillez payer les frais de souscription de 2$ pour investir.'
+      );
+    }
+
     const pool = await this.poolRepository.findOne({ where: { id: createDto.poolId } });
     
     if (!pool) {
@@ -22,6 +37,14 @@ export class InvestmentService {
 
     if (pool.status !== PoolStatus.PENDING && pool.status !== PoolStatus.ACTIVE) {
       throw new BadRequestException('Ce pool n\'accepte plus d\'investissements');
+    }
+
+    // 2. Vérifier la fenêtre de 48h pour la validation
+    const validationDeadline = new Date(pool.startDate);
+    validationDeadline.setHours(validationDeadline.getHours() + 48);
+
+    if (new Date() > validationDeadline) {
+      throw new BadRequestException('La période de validation pour ce pool est terminée (48h rule).');
     }
 
     if (createDto.amount < Number(pool.minInvestment)) {
