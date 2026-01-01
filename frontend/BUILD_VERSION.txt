@@ -1,0 +1,6 @@
+Build: 2025-12-31 Premium Design v1.0
+- New glassmorphism theme
+- Admin dashboard with stats
+- PoolCard animations
+- Tailwind tokens system
+- Dark premium UI (#020617)
