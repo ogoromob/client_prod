@@ -1,286 +1,202 @@
-import { api } from '../lib/axios';
-import type { 
-  Pool,
-  User,
-  AdminDashboardMetrics,
-  PoolFormData,
-  ApiResponse 
-} from '../types';
-import { mockAdminMetrics, mockPools, mockUsers } from '../mocks/data';
+import api from './api';
 
-const MOCK_MODE = import.meta.env.VITE_MOCK_MODE === 'true';
+export interface PoolType {
+  id: string;
+  name: string;
+  type: 'momentum' | 'swing' | 'altcoin' | 'dca' | 'community';
+  description: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'very_high';
+  status: 'draft' | 'pending' | 'active' | 'settlement' | 'closed' | 'paused' | 'cancelled';
+  targetAmount: number;
+  currentAmount: number;
+  minInvestment: number;
+  maxInvestors: number;
+  managerFeePercentage: number;
+  startDate: string;
+  endDate: string;
+  tradingStrategy: string;
+  totalPnL: number;
+  pnlPercentage: number;
+  investorCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export const adminService = {
-  // Get dashboard metrics
-  async getDashboardMetrics(): Promise<AdminDashboardMetrics> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockAdminMetrics;
-    }
-    
-    const response = await api.get<ApiResponse<AdminDashboardMetrics>>('/admin/dashboard');
-    return response.data!;
+export interface CreatePoolForm {
+  name: string;
+  type: 'momentum' | 'swing' | 'altcoin' | 'dca' | 'community';
+  description: string;
+  targetAmount: number;
+  minInvestment: number;
+  maxInvestors: number;
+  managerFeePercentage: number;
+  startDate: string;
+  endDate: string;
+  tradingStrategy: string;
+  riskLevel: 'low' | 'medium' | 'high' | 'very_high';
+  exchanges?: string[];
+  pairs?: string[];
+  maxLeverage?: number;
+  stopLoss?: number;
+  takeProfit?: number;
+}
+
+export const poolTypePresets = {
+  momentum: {
+    name: 'Momentum BTC',
+    description: 'Trading haute volatilité sur BTC avec leverage',
+    riskLevel: 'very_high' as const,
+    tradingStrategy: 'Momentum scalping sur BTC/USDT avec TP/SL serrés',
+    pairs: ['BTC/USDT'],
+    exchanges: ['Binance'],
+    maxLeverage: 10,
+    stopLoss: 2,
+    takeProfit: 5,
   },
-  
-  // Pool Management
-  async createPool(data: PoolFormData): Promise<Pool> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newPool: Pool = {
-        id: `pool-${Date.now()}`,
-        name: data.name,
-        description: data.description,
-        status: 'draft' as any,
-        managerId: 'admin-1',
-        managerName: 'Admin',
-        targetAmount: data.targetAmount,
-        currentAmount: 0,
-        totalInvested: 0,
-        totalPnL: 0,
-        managerFeePercentage: data.managerFeePercentage,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        minInvestment: data.minInvestment,
-        maxInvestors: data.maxInvestors,
-        currentInvestors: 0,
-        tradingStrategy: data.tradingStrategy,
-        riskLevel: data.riskLevel,
-        metadata: {
-          exchanges: data.exchanges,
-          pairs: data.pairs,
-          maxLeverage: data.maxLeverage,
-          stopLoss: data.stopLoss,
-          takeProfit: data.takeProfit,
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      return newPool;
-    }
-    
-    const response = await api.post<ApiResponse<Pool>>('/admin/pools', data);
-    return response.data!;
+  swing: {
+    name: 'Swing ETH',
+    description: 'Trading swing sur ETH, risque modéré',
+    riskLevel: 'medium' as const,
+    tradingStrategy: 'Swing trading sur ETH/USDT, 4h-1d timeframe',
+    pairs: ['ETH/USDT'],
+    exchanges: ['Binance'],
+    maxLeverage: 3,
+    stopLoss: 3,
+    takeProfit: 8,
   },
-  
-  async updatePool(poolId: string, data: Partial<PoolFormData>): Promise<Pool> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const pool = mockPools.find(p => p.id === poolId);
-      if (!pool) throw new Error('Pool not found');
-      
-      return {
-        ...pool,
-        ...data,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    
-    const response = await api.put<ApiResponse<Pool>>(`/admin/pools/${poolId}`, data);
-    return response.data!;
+  altcoin: {
+    name: 'Altcoin Beta',
+    description: 'Altcoins haute croissance, très haut risque',
+    riskLevel: 'very_high' as const,
+    tradingStrategy: 'Sélection altcoins avec potentiel 10x+',
+    pairs: ['SOL/USDT', 'AVAX/USDT', 'MATIC/USDT'],
+    exchanges: ['Binance'],
+    maxLeverage: 5,
+    stopLoss: 5,
+    takeProfit: 20,
   },
-  
-  async deletePool(poolId: string): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return;
-    }
-    
-    await api.delete(`/admin/pools/${poolId}`);
+  dca: {
+    name: 'Conservative DCA',
+    description: 'Dollar Cost Averaging, risque faible',
+    riskLevel: 'low' as const,
+    tradingStrategy: 'DCA hebdomadaire sur BTC/ETH, pas de leverage',
+    pairs: ['BTC/USDT', 'ETH/USDT'],
+    exchanges: ['Binance'],
+    maxLeverage: 1,
+    stopLoss: 0,
+    takeProfit: 0,
   },
-  
-  async publishPool(poolId: string): Promise<Pool> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 700));
-      
-      const pool = mockPools.find(p => p.id === poolId);
-      if (!pool) throw new Error('Pool not found');
-      
-      return {
-        ...pool,
-        status: 'pending' as any,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    
-    const response = await api.post<ApiResponse<Pool>>(`/admin/pools/${poolId}/publish`);
-    return response.data!;
-  },
-  
-  async pausePool(poolId: string): Promise<Pool> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      const pool = mockPools.find(p => p.id === poolId);
-      if (!pool) throw new Error('Pool not found');
-      
-      return {
-        ...pool,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    
-    const response = await api.post<ApiResponse<Pool>>(`/admin/pools/${poolId}/pause`);
-    return response.data!;
-  },
-  
-  async resumePool(poolId: string): Promise<Pool> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      const pool = mockPools.find(p => p.id === poolId);
-      if (!pool) throw new Error('Pool not found');
-      
-      return {
-        ...pool,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    
-    const response = await api.post<ApiResponse<Pool>>(`/admin/pools/${poolId}/resume`);
-    return response.data!;
-  },
-  
-  async forceSettlement(poolId: string): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return;
-    }
-    
-    await api.post(`/admin/pools/${poolId}/force-settlement`);
-  },
-  
-  async emergencyStop(poolId: string): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return;
-    }
-    
-    await api.post(`/admin/pools/${poolId}/emergency-stop`);
-  },
-  
-  // User Management
-  async getAllUsers(filters?: any): Promise<User[]> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockUsers;
-    }
-    
-    const response = await api.get<ApiResponse<User[]>>('/admin/users', { params: filters });
-    return response.data!;
-  },
-  
-  async getUserById(userId: string): Promise<User> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const user = mockUsers.find(u => u.id === userId);
-      if (!user) throw new Error('User not found');
-      
-      return user;
-    }
-    
-    const response = await api.get<ApiResponse<User>>(`/admin/users/${userId}`);
-    return response.data!;
-  },
-  
-  async updateUserKycStatus(userId: string, status: 'pending' | 'approved' | 'rejected'): Promise<User> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const user = mockUsers.find(u => u.id === userId);
-      if (!user) throw new Error('User not found');
-      
-      return {
-        ...user,
-        kycStatus: status,
-      };
-    }
-    
-    const response = await api.put<ApiResponse<User>>(`/admin/users/${userId}/kyc-status`, { status });
-    return response.data!;
-  },
-  
-  async blockUser(userId: string): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      return;
-    }
-    
-    await api.post(`/admin/users/${userId}/block`);
-  },
-  
-  async unblockUser(userId: string): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      return;
-    }
-    
-    await api.post(`/admin/users/${userId}/unblock`);
-  },
-  
-  // Audit Logs
-  async getAuditLogs(filters?: {
-    startDate?: string;
-    endDate?: string;
-    userId?: string;
-    action?: string;
-  }): Promise<any[]> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 700));
-      return [
-        {
-          id: '1',
-          timestamp: new Date().toISOString(),
-          userId: '1',
-          action: 'CREATE_INVESTMENT',
-          resourceType: 'investment',
-          resourceId: 'inv-1',
-          ipAddress: '192.168.1.1',
-          metadata: {},
-        },
-      ];
-    }
-    
-    const response = await api.get<ApiResponse<any[]>>('/admin/audit-logs', { params: filters });
-    return response.data!;
-  },
-  
-  // Configuration
-  async getConfig(): Promise<any> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return {
-        minInvestment: 100,
-        maxInvestment: 100000,
-        defaultManagerFee: 15,
-        supportedExchanges: ['Binance', 'Bybit', 'KuCoin'],
-        supportedPaymentMethods: ['bank_transfer', 'crypto', 'card'],
-      };
-    }
-    
-    const response = await api.get<ApiResponse<any>>('/admin/config');
-    return response.data!;
-  },
-  
-  async updateConfig(config: any): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return;
-    }
-    
-    await api.put('/admin/config', config);
-  },
-  
-  // Backup
-  async triggerBackup(): Promise<void> {
-    if (MOCK_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return;
-    }
-    
-    await api.post('/admin/backup');
+  community: {
+    name: 'Community Choice',
+    description: 'Stratégie votée par la communauté',
+    riskLevel: 'medium' as const,
+    tradingStrategy: 'À définir par vote communautaire',
+    pairs: [],
+    exchanges: [],
+    maxLeverage: 2,
+    stopLoss: 0,
+    takeProfit: 0,
   },
 };
+
+class AdminService {
+  // Dashboard
+  async getDashboard() {
+    return api.get('/admin/dashboard');
+  }
+
+  // Pools
+  async getPools() {
+    return api.get('/admin/pools');
+  }
+
+  async getPoolById(id: string) {
+    return api.get(`/admin/pools/${id}`);
+  }
+
+  async createPool(data: CreatePoolForm) {
+    return api.post('/admin/pools', data);
+  }
+
+  async updatePool(id: string, data: Partial<CreatePoolForm>) {
+    return api.put(`/admin/pools/${id}`, data);
+  }
+
+  async deletePool(id: string) {
+    return api.delete(`/admin/pools/${id}`);
+  }
+
+  async publishPool(id: string) {
+    return api.post(`/admin/pools/${id}/publish`);
+  }
+
+  async pausePool(id: string) {
+    return api.post(`/admin/pools/${id}/pause`);
+  }
+
+  async resumePool(id: string) {
+    return api.post(`/admin/pools/${id}/resume`);
+  }
+
+  async forceSettlement(id: string) {
+    return api.post(`/admin/pools/${id}/force-settlement`);
+  }
+
+  async emergencyStop(id: string) {
+    return api.post(`/admin/pools/${id}/emergency-stop`);
+  }
+
+  // Users
+  async getUsers(filters?: any) {
+    return api.get('/admin/users', { params: filters });
+  }
+
+  async getUserById(id: string) {
+    return api.get(`/admin/users/${id}`);
+  }
+
+  async updateUserKycStatus(id: string, status: string) {
+    return api.put(`/admin/users/${id}/kyc-status`, { status });
+  }
+
+  async blockUser(id: string) {
+    return api.post(`/admin/users/${id}/block`);
+  }
+
+  async unblockUser(id: string) {
+    return api.post(`/admin/users/${id}/unblock`);
+  }
+
+  // Withdrawals
+  async getWithdrawals(filters?: any) {
+    return api.get('/admin/withdrawals', { params: filters });
+  }
+
+  async approveWithdrawal(id: string) {
+    return api.put(`/admin/withdrawals/${id}/approve`);
+  }
+
+  async rejectWithdrawal(id: string, reason: string) {
+    return api.put(`/admin/withdrawals/${id}/reject`, { reason });
+  }
+
+  // Audit logs
+  async getAuditLogs(filters?: any) {
+    return api.get('/admin/audit-logs', { params: filters });
+  }
+
+  // Config
+  async getConfig() {
+    return api.get('/admin/config');
+  }
+
+  async updateConfig(config: any) {
+    return api.put('/admin/config', config);
+  }
+
+  async triggerBackup() {
+    return api.post('/admin/backup');
+  }
+}
+
+export default new AdminService();

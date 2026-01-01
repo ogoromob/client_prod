@@ -123,19 +123,19 @@ export class PoolService {
       throw new BadRequestException('Seuls les pools actifs peuvent être mis en pause');
     }
 
-    // In real implementation, would pause trading via trading adapter
-    return pool;
+    pool.status = PoolStatus.PAUSED;
+    return await this.poolRepository.save(pool);
   }
 
   async resume(id: string): Promise<PoolEntity> {
     const pool = await this.findOne(id);
 
-    if (pool.status !== PoolStatus.ACTIVE) {
-      throw new BadRequestException('Le pool n\'est pas en pause');
+    if (pool.status !== PoolStatus.PAUSED) {
+      throw new BadRequestException('Seuls les pools en pause peuvent être repris');
     }
 
-    // In real implementation, would resume trading via trading adapter
-    return pool;
+    pool.status = PoolStatus.ACTIVE;
+    return await this.poolRepository.save(pool);
   }
 
   async getPerformance(id: string) {

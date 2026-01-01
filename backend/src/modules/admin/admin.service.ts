@@ -47,6 +47,13 @@ export class AdminService {
     };
   }
 
+  async getPools() {
+    return await this.poolRepository.find({
+      relations: ['manager', 'investments'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async createPool(createDto: CreatePoolDto, managerId: string) {
     return await this.poolService.create(createDto, managerId);
   }

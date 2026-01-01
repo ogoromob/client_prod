@@ -25,8 +25,8 @@ export class AdminController {
 
   @Get('pools')
   async getPools() {
-    // Reuse pool service through admin service if needed
-    return createSuccessResponse([]);
+    const pools = await this.adminService.getPools();
+    return createSuccessResponse(pools);
   }
 
   @Post('pools')

@@ -6,6 +6,7 @@ export enum PoolStatus {
   DRAFT = 'draft',
   PENDING = 'pending',
   ACTIVE = 'active',
+  PAUSED = 'paused',
   SETTLEMENT = 'settlement',
   CLOSED = 'closed',
   CANCELLED = 'cancelled',
