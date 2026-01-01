@@ -51,19 +51,23 @@ export class PoolScheduler {
       );
     }
 
-    // 3. Passer de CLOSED à SETTLING (Règlement des positions)
+    // 3. Passer de CLOSED à SETTLEMENT (Règlement des positions)
+    // Note: Pas de settleDate dans l'entité, on utilise endDate + 1 jour
+    const settlementDate = new Date(now);
+    settlementDate.setDate(settlementDate.getDate() - 1);
+
     const poolsToSettle = await this.poolRepository.find({
       where: {
         status: PoolStatus.CLOSED,
-        settleDate: LessThan(now),
+        endDate: LessThan(settlementDate),
       },
     });
 
     for (const pool of poolsToSettle) {
-      pool.status = PoolStatus.SETTLING;
+      pool.status = PoolStatus.SETTLEMENT;
       await this.poolRepository.save(pool);
       this.logger.log(
-        `Pool ${pool.name} en cours de règlement (Settle Date atteinte)`
+        `Pool ${pool.name} en cours de règlement (1 jour après End Date)`
       );
     }
   }
