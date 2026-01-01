@@ -242,28 +242,38 @@ export class AuthService {
 
   // Seed admin user on startup
   async seedAdminUser() {
-    const adminEmail = this.configService.get('admin.email');
-    const existingAdmin = await this.userRepository.findOne({
-      where: { email: adminEmail },
-    });
-
-    if (!existingAdmin) {
+    try {
+      const adminEmail = this.configService.get('admin.email');
       const adminPassword = this.configService.get('admin.password');
-      const passwordHash = await bcrypt.hash(adminPassword, 12);
+      
+      if (!adminEmail || !adminPassword) {
+        throw new Error('Admin email or password not configured');
+      }
 
-      const admin = this.userRepository.create({
-        email: adminEmail,
-        passwordHash,
-        role: UserRole.ADMIN,
-        mfaEnabled: false,
-        kycStatus: KycStatus.APPROVED,
+      const existingAdmin = await this.userRepository.findOne({
+        where: { email: adminEmail },
       });
 
-      await this.userRepository.save(admin);
-      console.log('✅ Admin user created successfully');
-      return { message: 'Admin user created successfully', email: adminEmail };
-    } else {
-      return { message: 'Admin user already exists', email: adminEmail };
+      if (!existingAdmin) {
+        const passwordHash = await bcrypt.hash(adminPassword, 12);
+
+        const admin = this.userRepository.create({
+          email: adminEmail,
+          passwordHash,
+          role: UserRole.ADMIN,
+          mfaEnabled: false,
+          kycStatus: KycStatus.APPROVED,
+        });
+
+        await this.userRepository.save(admin);
+        console.log('✅ Admin user created successfully');
+        return { message: 'Admin user created successfully', email: adminEmail };
+      } else {
+        return { message: 'Admin user already exists', email: adminEmail };
+      }
+    } catch (error) {
+      console.error('❌ Error seeding admin user:', error);
+      throw error;
     }
   }
 }
