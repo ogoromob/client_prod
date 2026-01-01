@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { InvestmentEntity, InvestmentStatus, PoolEntity, PoolStatus, UserEntity } from '../../database/entities';
 import { CreateInvestmentDto } from './dto/investment.dto';
 
@@ -15,9 +15,13 @@ export class InvestmentService {
     private userRepository: Repository<UserEntity>,
   ) {}
 
-  async create(createDto: CreateInvestmentDto, userId: string): Promise<InvestmentEntity> {
+  async create(createDto: CreateInvestmentDto, userId: string, manager?: EntityManager): Promise<InvestmentEntity> {
+    const repo = manager ? manager.getRepository(InvestmentEntity) : this.investmentRepository;
+    const poolRepo = manager ? manager.getRepository(PoolEntity) : this.poolRepository;
+    const userRepo = manager ? manager.getRepository(UserEntity) : this.userRepository;
+
     // 1. Vérifier l'abonnement de l'utilisateur
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await userRepo.findOne({ where: { id: userId } });
     
     if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');
@@ -29,7 +33,7 @@ export class InvestmentService {
       );
     }
 
-    const pool = await this.poolRepository.findOne({ where: { id: createDto.poolId } });
+    const pool = await poolRepo.findOne({ where: { id: createDto.poolId } });
     
     if (!pool) {
       throw new NotFoundException('Pool non trouvé');
@@ -51,7 +55,7 @@ export class InvestmentService {
       throw new BadRequestException(`Montant minimum: ${pool.minInvestment}€`);
     }
 
-    const investment = this.investmentRepository.create({
+    const investment = repo.create({
       poolId: createDto.poolId,
       userId,
       initialAmount: createDto.amount,
@@ -63,12 +67,12 @@ export class InvestmentService {
       paymentMethod: createDto.paymentMethod,
     });
 
-    const saved = await this.investmentRepository.save(investment);
+    const saved = await repo.save(investment);
 
-    // Update pool amounts
+    // Update pool amounts (atomique avec la transaction)
     pool.currentAmount = Number(pool.currentAmount) + createDto.amount;
     pool.totalInvested = Number(pool.totalInvested) + createDto.amount;
-    await this.poolRepository.save(pool);
+    await poolRepo.save(pool);
 
     return saved;
   }
