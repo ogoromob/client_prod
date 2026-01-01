@@ -69,7 +69,7 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
         <div className="flex gap-3">
           {Icon && (
             <div className="flex-shrink-0">
-              {typeof Icon === 'function' ? <Icon className="h-5 w-5" /> : Icon}
+              <Icon className="h-5 w-5" />
             </div>
           )}
 
