@@ -39,7 +39,7 @@ interface Alert {
   timestamp: string;
 }
 
-export function AdminDashboardPage() {
+function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
@@ -343,3 +343,5 @@ export function AdminDashboardPage() {
     </motion.div>
   );
 }
+
+export default AdminDashboardPage;

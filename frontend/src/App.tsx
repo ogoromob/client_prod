@@ -11,7 +11,7 @@ const PoolsExplorerPage = lazy(() => import('./pages/PoolsExplorerPage').then(m 
 const PoolDetailPage = lazy(() => import('./pages/PoolDetailPage').then(m => ({ default: m.PoolDetailPage })))
 
 // Admin pages
-const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })))
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.default })))
 const PoolsManagementPage = lazy(() => import('./pages/admin/PoolsManagementPage').then(m => ({ default: m.default })))
 const WithdrawalsManagementPage = lazy(() => import('./pages/admin/WithdrawalsManagementPage').then(m => ({ default: m.default })))
 const UsersManagementPage = lazy(() => import('./pages/admin/UsersManagementPage').then(m => ({ default: m.default })))
