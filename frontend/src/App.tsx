@@ -15,6 +15,9 @@ const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage')
 const PoolsManagementPage = lazy(() => import('./pages/admin/PoolsManagementPage').then(m => ({ default: m.default })))
 const WithdrawalsManagementPage = lazy(() => import('./pages/admin/WithdrawalsManagementPage').then(m => ({ default: m.default })))
 const UsersManagementPage = lazy(() => import('./pages/admin/UsersManagementPage').then(m => ({ default: m.default })))
+const AuditLogsPage = lazy(() => import('./pages/admin/AuditLogsPage').then(m => ({ default: m.default })))
+const SecurityPage = lazy(() => import('./pages/admin/SecurityPage').then(m => ({ default: m.default })))
+const ConfigurationPage = lazy(() => import('./pages/admin/ConfigurationPage').then(m => ({ default: m.default })))
 
 // Protected route component with real authentication check
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -62,7 +65,9 @@ function App() {
           <Route path="pools" element={<PoolsManagementPage />} />
           <Route path="withdrawals" element={<WithdrawalsManagementPage />} />
           <Route path="users" element={<UsersManagementPage />} />
-          {/* More admin routes will be added here */}
+          <Route path="audit" element={<AuditLogsPage />} />
+          <Route path="security" element={<SecurityPage />} />
+          <Route path="settings" element={<ConfigurationPage />} />
         </Route>
 
         {/* Catch-all redirects to the main dashboard */}
