@@ -85,7 +85,7 @@ export class InvestmentEntity {
   @Column({ nullable: true })
   withdrawnAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   rejectionReason: string | null;
 
   // Payment info

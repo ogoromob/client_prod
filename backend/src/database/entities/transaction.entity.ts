@@ -60,7 +60,6 @@ export class TransactionEntity {
 
   // Blockchain Info
   @Column({ unique: true })
-  @Index()
   txHash: string; // Hash de transaction unique
 
   @Column({ nullable: true })
