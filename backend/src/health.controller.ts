@@ -1,14 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { Public } from './common/decorators/public.decorator';
-import { UserEntity } from './database/entities';
 
 @Controller()
 export class HealthController {
   constructor(
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
+    @InjectDataSource() private dataSource: DataSource,
   ) {}
 
   @Public()
@@ -21,19 +19,32 @@ export class HealthController {
   @Get('api/v1/health/db')
   async healthDb() {
     try {
-      const userCount = await this.userRepository.count();
-      return { 
-        status: 'ok', 
-        database: 'connected',
-        userCount,
-        timestamp: new Date().toISOString() 
+      if (!this.dataSource.isInitialized) {
+        return { 
+          success: false, 
+          error: 'Database connection not initialized',
+          timestamp: new Date().toISOString() 
+        };
+      }
+
+      const result = await this.dataSource.query('SELECT 1');
+      return {
+        success: true,
+        message: 'Database connection is healthy',
+        details: {
+          isConnected: this.dataSource.isInitialized,
+          testQuery: result ? 'OK' : 'Failed'
+        },
+        timestamp: new Date().toISOString()
       };
     } catch (error) {
-      return { 
-        status: 'error', 
-        database: 'disconnected',
-        error: error.message,
-        timestamp: new Date().toISOString() 
+      return {
+        success: false,
+        error: {
+          code: 'DB_ERROR',
+          message: error.message
+        },
+        timestamp: new Date().toISOString()
       };
     }
   }
