@@ -57,7 +57,8 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
     },
     ref
   ) => {
-    const Icon = customIcon || (variant && showIcon ? icons[variant] : null);
+    const IconComponent = customIcon ? null : (variant && showIcon ? icons[variant] : null);
+    const customIconNode = customIcon || null;
 
     return (
       <div
@@ -67,9 +68,14 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
         {...props}
       >
         <div className="flex gap-3">
-          {Icon && (
+          {IconComponent && (
             <div className="flex-shrink-0">
-              <Icon className="h-5 w-5" />
+              <IconComponent className="h-5 w-5" />
+            </div>
+          )}
+          {customIconNode && (
+            <div className="flex-shrink-0">
+              {customIconNode}
             </div>
           )}
 
