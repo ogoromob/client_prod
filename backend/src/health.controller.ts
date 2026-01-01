@@ -18,7 +18,7 @@ export class HealthController {
   }
 
   @Public()
-  @Get('health/db')
+  @Get('api/v1/health/db')
   async healthDb() {
     try {
       const userCount = await this.userRepository.count();
