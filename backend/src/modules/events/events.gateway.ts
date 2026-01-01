@@ -3,10 +3,38 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+
+interface PoolHealthMetrics {
+  poolId: string;
+  currentPnL: number;
+  dailyPnL: number;
+  drawdownPercentage: number;
+  isHealthy: boolean;
+  alerts: string[];
+}
+
+interface Alert {
+  type: string;
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  poolId?: string;
+  poolName?: string;
+  message: string;
+  timestamp: Date;
+  [key: string]: any;
+}
+
+interface UserNotification {
+  type: string;
+  message: string;
+  [key: string]: any;
+}
 
 @WebSocketGateway({
   cors: {
@@ -19,12 +47,12 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private logger: Logger = new Logger('EventsGateway');
+  private connectedUsers = new Map<string, string>();
 
   constructor(private jwtService: JwtService) {}
 
   async handleConnection(client: Socket) {
     try {
-      // Authentification du socket via le token JWT
       const token =
         client.handshake.auth.token ||
         client.handshake.headers.authorization;
@@ -35,12 +63,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      // Nettoyage du Bearer
       const jwt = token.replace('Bearer ', '');
       const payload = this.jwtService.verify(jwt);
 
-      // Rejoindre une "room" spécifique à l'utilisateur pour les notifs privées
       client.join(`user_${payload.sub}`);
+      this.connectedUsers.set(client.id, payload.sub);
       this.logger.log(
         `Client connected: ${client.id} (User: ${payload.sub})`
       );
@@ -51,19 +78,56 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    const userId = this.connectedUsers.get(client.id);
+    if (userId) {
+      this.connectedUsers.delete(client.id);
+      this.logger.log(`User ${userId} disconnected`);
+    }
   }
 
-  // Diffuser les mises à jour de pool à tout le monde
-  broadcastPoolUpdate(poolId: string, data: any) {
-    this.server.emit('pool:update', {
-      poolId,
-      ...data,
+  @SubscribeMessage('subscribeToPool')
+  handleSubscribeToPool(
+    @MessageBody() data: { poolId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    client.join(`pool_${data.poolId}`);
+    this.logger.log(`Client ${client.id} subscribed to pool ${data.poolId}`);
+  }
+
+  @SubscribeMessage('subscribeToAlerts')
+  handleSubscribeToAlerts(@ConnectedSocket() client: Socket) {
+    client.join('alerts');
+    this.logger.log(`Client ${client.id} subscribed to alerts`);
+  }
+
+  broadcastPoolHealth(health: PoolHealthMetrics) {
+    this.server.to(`pool_${health.poolId}`).emit('poolHealth', health);
+    this.server.to('alerts').emit('poolHealthUpdate', health);
+  }
+
+  broadcastAlert(alert: Alert) {
+    this.server.to('alerts').emit('systemAlert', alert);
+    
+    if (alert.severity === 'CRITICAL') {
+      this.logger.error(`Critical alert: ${alert.message}`, alert);
+    }
+  }
+
+  notifyUser(userId: string, notification: UserNotification) {
+    this.server.to(`user_${userId}`).emit('userNotification', {
+      ...notification,
       timestamp: new Date(),
     });
   }
 
-  // Diffuser les mises à jour de trade
+  broadcastPoolUpdate(poolId: string, update: any) {
+    this.server.to(`pool_${poolId}`).emit('poolUpdate', {
+      poolId,
+      ...update,
+      timestamp: new Date(),
+    });
+  }
+
   broadcastTradeExecuted(poolId: string, tradeData: any) {
     this.server.emit('trade:executed', {
       poolId,
@@ -72,7 +136,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  // Diffuser les mises à jour de position
   broadcastPositionUpdate(poolId: string, positionData: any) {
     this.server.emit('position:update', {
       poolId,
@@ -81,7 +144,6 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  // Diffuser les mises à jour de PnL
   broadcastPnLUpdate(poolId: string, pnlData: any) {
     this.server.emit('pnl:update', {
       poolId,
@@ -90,10 +152,16 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  // Notifier un utilisateur spécifique
-  notifyUser(userId: string, event: string, data: any) {
-    this.server.to(`user_${userId}`).emit(event, {
-      ...data,
+  broadcastGlobalStats(stats: any) {
+    this.server.emit('globalStats', {
+      ...stats,
+      timestamp: new Date(),
+    });
+  }
+
+  broadcastInvestmentUpdate(userId: string, investment: any) {
+    this.server.to(`user_${userId}`).emit('investmentUpdate', {
+      ...investment,
       timestamp: new Date(),
     });
   }
