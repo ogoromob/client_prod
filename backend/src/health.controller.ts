@@ -3,20 +3,20 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { Public } from './common/decorators/public.decorator';
 
-@Controller()
+@Controller('health')
 export class HealthController {
   constructor(
     @InjectDataSource() private dataSource: DataSource,
   ) {}
 
   @Public()
-  @Get('health')
+  @Get()
   health() {
     return { status: 'ok', service: 'tradingpool-backend', timestamp: new Date().toISOString() };
   }
 
   @Public()
-  @Get('api/v1/health/db')
+  @Get('db')
   async healthDb() {
     try {
       if (!this.dataSource.isInitialized) {
