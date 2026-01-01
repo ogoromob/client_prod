@@ -14,6 +14,7 @@ const PoolDetailPage = lazy(() => import('./pages/PoolDetailPage').then(m => ({ 
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })))
 const PoolsManagementPage = lazy(() => import('./pages/admin/PoolsManagementPage').then(m => ({ default: m.default })))
 const WithdrawalsManagementPage = lazy(() => import('./pages/admin/WithdrawalsManagementPage').then(m => ({ default: m.default })))
+const UsersManagementPage = lazy(() => import('./pages/admin/UsersManagementPage').then(m => ({ default: m.default })))
 
 // Protected route component with real authentication check
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -60,6 +61,7 @@ function App() {
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="pools" element={<PoolsManagementPage />} />
           <Route path="withdrawals" element={<WithdrawalsManagementPage />} />
+          <Route path="users" element={<UsersManagementPage />} />
           {/* More admin routes will be added here */}
         </Route>
 
