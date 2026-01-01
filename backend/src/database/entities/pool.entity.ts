@@ -13,6 +13,14 @@ export enum PoolStatus {
   ARCHIVED = 'archived',
 }
 
+export enum ModelType {
+  WORKER_ALPHA = 'worker_alpha',
+  WORKER_BETA = 'worker_beta',
+  WORKER_GAMMA = 'worker_gamma',
+  WORKER_DELTA = 'worker_delta',
+  ADAN_FUSION = 'adan_fusion',
+}
+
 export enum RiskLevel {
   LOW = 'low',
   MEDIUM = 'medium',
@@ -27,6 +35,13 @@ export class PoolEntity {
 
   @Column()
   name: string;
+
+  @Column({
+    type: 'simple-enum',
+    enum: ModelType,
+    default: ModelType.ADAN_FUSION,
+  })
+  modelType: ModelType;
 
   @Column({ type: 'text', nullable: true })
   description: string;
@@ -60,6 +75,30 @@ export class PoolEntity {
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 15.0 })
   managerFeePercentage: number;
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 2 })
+  subscriptionFee: number; // 2 USDT par défaut
+
+  // Limites de Sécurité (Plafonds)
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 15000 })
+  maxInvestmentPerUser: number; // 10k - 15k USDT
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 20000 })
+  maxInvestmentPerAdmin: number; // 20k USDT max pour admins
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 500000 })
+  poolHardCap: number; // Plafond global du pool
+
+  // Durée
+  @Column({ default: 30 })
+  durationDays: number; // Durée en jours (configurable par Super Admin)
+
+  // Circuit Breaker
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 10 })
+  maxDailyDrawdown: number; // 10% max de drawdown quotidien
+
+  @Column({ default: false })
+  isReinvestDefault: boolean; // Auto-réinvestissement par défaut
 
   // Dates
   @Column({ nullable: true })

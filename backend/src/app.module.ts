@@ -7,7 +7,7 @@ import configuration from './config/configuration';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-import { UserEntity, PoolEntity, InvestmentEntity, WithdrawalEntity } from './database/entities';
+import { UserEntity, PoolEntity, InvestmentEntity, WithdrawalEntity, TransactionEntity } from './database/entities';
 import { AuthModule } from './modules/auth/auth.module';
 import { PoolModule } from './modules/pool/pool.module';
 import { InvestmentModule } from './modules/investment/investment.module';
@@ -32,7 +32,7 @@ import { HealthController } from './health.controller';
       useFactory: () => ({
         type: 'sqlite' as const,
         database: process.env.DATABASE_NAME || './data/tradingpool.db',
-        entities: [UserEntity, PoolEntity, InvestmentEntity, WithdrawalEntity],
+        entities: [UserEntity, PoolEntity, InvestmentEntity, WithdrawalEntity, TransactionEntity],
         synchronize: true, // OK for development/production with SQLite
         logging: false,
       }),

@@ -4,13 +4,16 @@ import { PoolEntity } from './pool.entity';
 import { WithdrawalEntity } from './withdrawal.entity';
 
 export enum InvestmentStatus {
-  PENDING = 'pending',
+  PENDING_VERIFICATION = 'pending_verification',
   CONFIRMED = 'confirmed',
   REJECTED = 'rejected',
+  ACTIVE = 'active',
   LOCKED = 'locked',
+  COMPLETED = 'completed',
   WITHDRAWABLE = 'withdrawable',
   WITHDRAWAL_PENDING = 'withdrawal_pending',
   WITHDRAWN = 'withdrawn',
+  REINVESTED = 'reinvested',
 }
 
 @Entity('investments')
@@ -49,9 +52,22 @@ export class InvestmentEntity {
   @Column({
     type: 'simple-enum',
     enum: InvestmentStatus,
-    default: InvestmentStatus.PENDING,
+    default: InvestmentStatus.PENDING_VERIFICATION,
   })
   status: InvestmentStatus;
+
+  // Preuve de Dépôt (Zéro Trust - Blockchain)
+  @Column({ unique: true, nullable: true })
+  depositTxHash: string; // Le TxID fourni par l'utilisateur
+
+  @Column({ nullable: true })
+  depositWalletAddress: string; // Adresse de destination (notre wallet)
+
+  @Column({ default: 0 })
+  confirmations: number; // Confirmations blockchain
+
+  @Column({ nullable: true })
+  depositReference: string; // Référence unique pour tracer le dépôt
 
   // Dates
   @Column()

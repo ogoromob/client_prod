@@ -6,6 +6,7 @@ export enum UserRole {
   INVESTOR = 'investor',
   ADMIN = 'admin',
   MANAGER = 'manager',
+  SUPER_ADMIN = 'super_admin',
 }
 
 export enum KycStatus {
@@ -60,6 +61,18 @@ export class UserEntity {
 
   @Column({ default: false })
   hasActiveSubscription: boolean;
+
+  @Column({ default: true })
+  autoReinvest: boolean; // Réinvestissement automatique par défaut
+
+  @Column({ nullable: true })
+  depositReference: string; // Référence unique pour les dépôts crypto
+
+  @Column({ type: 'decimal', precision: 18, scale: 2, default: 0 })
+  totalInvestedAmount: number; // Tracking total investi (pour limites admin)
+
+  @Column({ default: false })
+  mfaRequired: boolean; // MFA forcé pour Super Admin
 
   @CreateDateColumn()
   createdAt: Date;

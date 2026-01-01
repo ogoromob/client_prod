@@ -131,7 +131,7 @@ export class InvestmentService {
   async confirm(id: string, userId: string): Promise<InvestmentEntity> {
     const investment = await this.findOne(id, userId);
     
-    if (investment.status !== InvestmentStatus.PENDING) {
+    if (investment.status !== InvestmentStatus.PENDING_VERIFICATION) {
       throw new BadRequestException('Cet investissement ne peut pas être confirmé');
     }
 
@@ -143,7 +143,7 @@ export class InvestmentService {
   async reject(id: string, userId: string, reason?: string): Promise<InvestmentEntity> {
     const investment = await this.findOne(id, userId);
     
-    if (investment.status !== InvestmentStatus.PENDING) {
+    if (investment.status !== InvestmentStatus.PENDING_VERIFICATION) {
       throw new BadRequestException('Cet investissement ne peut pas être rejeté');
     }
 
@@ -164,7 +164,7 @@ export class InvestmentService {
 
   async getPendingInvestments(): Promise<InvestmentEntity[]> {
     return await this.investmentRepository.find({
-      where: { status: InvestmentStatus.PENDING },
+      where: { status: InvestmentStatus.PENDING_VERIFICATION },
       relations: ['user', 'pool'],
       order: { createdAt: 'ASC' },
     });
@@ -184,7 +184,7 @@ export class InvestmentService {
       throw new NotFoundException('Investissement non trouvé');
     }
 
-    if (investment.status !== InvestmentStatus.PENDING) {
+    if (investment.status !== InvestmentStatus.PENDING_VERIFICATION) {
       throw new BadRequestException('Cet investissement ne peut pas être approuvé');
     }
 
@@ -200,7 +200,7 @@ export class InvestmentService {
       throw new NotFoundException('Investissement non trouvé');
     }
 
-    if (investment.status !== InvestmentStatus.PENDING) {
+    if (investment.status !== InvestmentStatus.PENDING_VERIFICATION) {
       throw new BadRequestException('Cet investissement ne peut pas être rejeté');
     }
 
