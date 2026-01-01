@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import adminService, { poolTypePresets, CreatePoolForm, PoolType } from '../../services/adminService';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface PoolModalProps {
   isOpen: boolean;
@@ -11,27 +12,66 @@ interface PoolModalProps {
   pool?: PoolType;
 }
 
-const poolValidationSchema = Yup.object().shape({
-  name: Yup.string().required('Nom requis').min(3, 'Min 3 caractères'),
-  type: Yup.string().required('Type requis'),
-  description: Yup.string().required('Description requise'),
-  targetAmount: Yup.number().required('Montant cible requis').min(1000, 'Min 1000€'),
-  minInvestment: Yup.number().required('Investissement min requis').min(10, 'Min 10€'),
-  maxInvestors: Yup.number().required('Max investisseurs requis').min(1),
-  managerFeePercentage: Yup.number().required('Frais manager requis').min(0).max(50),
-  startDate: Yup.date().required('Date ouverture requise').typeError('Date invalide'),
-  endDate: Yup.date()
-    .required('Date fermeture requise')
-    .typeError('Date invalide')
-    .min(Yup.ref('startDate'), 'Doit être après la date ouverture'),
-  tradingStrategy: Yup.string().required('Stratégie requise'),
-  riskLevel: Yup.string().required('Niveau risque requis'),
+const poolValidationSchema = z.object({
+  name: z.string().min(3, 'Min 3 caractères').max(100),
+  type: z.enum(['momentum', 'swing', 'altcoin', 'dca', 'community']),
+  description: z.string().min(10, 'Min 10 caractères'),
+  targetAmount: z.number().min(1000, 'Min 1000€'),
+  minInvestment: z.number().min(10, 'Min 10€'),
+  maxInvestors: z.number().min(1),
+  managerFeePercentage: z.number().min(0).max(50),
+  startDate: z.string(),
+  endDate: z.string(),
+  tradingStrategy: z.string().min(10, 'Min 10 caractères'),
+  riskLevel: z.enum(['low', 'medium', 'high', 'very_high']),
+}).refine((data) => new Date(data.endDate) > new Date(data.startDate), {
+  message: 'La date de fermeture doit être après la date d\'ouverture',
+  path: ['endDate'],
 });
 
+type PoolFormData = z.infer<typeof poolValidationSchema>;
+
 const PoolModal: React.FC<PoolModalProps> = ({ isOpen, onClose, onSuccess, pool }) => {
-  const [step, setStep] = useState<'type' | 'details' | 'dates' | 'advanced'>('type');
+  const [step, setStep] = useState<'type' | 'details' | 'dates'>('type');
   const [selectedType, setSelectedType] = useState<keyof typeof poolTypePresets | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<PoolFormData>({
+    resolver: zodResolver(poolValidationSchema),
+    defaultValues: pool
+      ? {
+          name: pool.name,
+          type: pool.type as any,
+          description: pool.description,
+          targetAmount: pool.targetAmount,
+          minInvestment: pool.minInvestment,
+          maxInvestors: pool.maxInvestors,
+          managerFeePercentage: pool.managerFeePercentage,
+          startDate: pool.startDate.split('T')[0],
+          endDate: pool.endDate.split('T')[0],
+          tradingStrategy: pool.tradingStrategy,
+          riskLevel: pool.riskLevel,
+        }
+      : {
+          name: '',
+          type: 'momentum',
+          description: '',
+          targetAmount: 10000,
+          minInvestment: 100,
+          maxInvestors: 50,
+          managerFeePercentage: 15,
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          tradingStrategy: '',
+          riskLevel: 'medium',
+        },
+  });
 
   useEffect(() => {
     if (pool) {
@@ -43,35 +83,7 @@ const PoolModal: React.FC<PoolModalProps> = ({ isOpen, onClose, onSuccess, pool 
     }
   }, [pool, isOpen]);
 
-  const initialValues: CreatePoolForm = pool
-    ? {
-        name: pool.name,
-        type: pool.type as any,
-        description: pool.description,
-        targetAmount: pool.targetAmount,
-        minInvestment: pool.minInvestment,
-        maxInvestors: pool.maxInvestors,
-        managerFeePercentage: pool.managerFeePercentage,
-        startDate: pool.startDate.split('T')[0],
-        endDate: pool.endDate.split('T')[0],
-        tradingStrategy: pool.tradingStrategy,
-        riskLevel: pool.riskLevel,
-      }
-    : {
-        name: '',
-        type: 'momentum',
-        description: '',
-        targetAmount: 10000,
-        minInvestment: 100,
-        maxInvestors: 50,
-        managerFeePercentage: 15,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        tradingStrategy: '',
-        riskLevel: 'medium',
-      };
-
-  const handleSubmit = async (values: CreatePoolForm) => {
+  const handleSubmitForm = async (values: PoolFormData) => {
     try {
       setIsLoading(true);
       if (pool) {
@@ -108,259 +120,307 @@ const PoolModal: React.FC<PoolModalProps> = ({ isOpen, onClose, onSuccess, pool 
           </button>
         </div>
 
-        <Formik
-          initialValues={initialValues}
-          validationSchema={poolValidationSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ values, setFieldValue, errors, touched }) => (
-            <Form className="p-6 space-y-6">
-              {/* Step 1: Type Selection */}
-              {step === 'type' && !pool && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-100">Sélectionner le type de pool</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {Object.entries(poolTypePresets).map(([key, preset]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => {
-                          setSelectedType(key as keyof typeof poolTypePresets);
-                          setFieldValue('type', key);
-                          setFieldValue('name', preset.name);
-                          setFieldValue('description', preset.description);
-                          setFieldValue('riskLevel', preset.riskLevel);
-                          setFieldValue('tradingStrategy', preset.tradingStrategy);
-                          setFieldValue('maxLeverage', preset.maxLeverage);
-                          setStep('details');
-                        }}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          selectedType === key
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                        }`}
-                      >
-                        <div className="text-left">
-                          <p className="font-semibold text-slate-100">{preset.name}</p>
-                          <p className="text-sm text-slate-400">{preset.description}</p>
-                          <p className="text-xs text-slate-500 mt-2">
-                            Risque: {preset.riskLevel.toUpperCase()}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+        <form onSubmit={handleSubmit(handleSubmitForm)} className="p-6 space-y-6">
+          {/* Step 1: Type Selection */}
+          {step === 'type' && !pool && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-100">Sélectionner le type de pool</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(poolTypePresets).map(([key, preset]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedType(key as keyof typeof poolTypePresets);
+                      setValue('type', key as any);
+                      setValue('name', preset.name);
+                      setValue('description', preset.description);
+                      setValue('riskLevel', preset.riskLevel);
+                      setValue('tradingStrategy', preset.tradingStrategy);
+                      setStep('details');
+                    }}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      selectedType === key
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                    }`}
+                  >
+                    <p className="font-semibold text-slate-100">{preset.name}</p>
+                    <p className="text-sm text-slate-400">{preset.description}</p>
+                    <p className="text-xs text-slate-500 mt-2">
+                      Risque: {preset.riskLevel.toUpperCase()}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-              {/* Step 2: Details */}
-              {(step === 'details' || pool) && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-100">Détails du pool</h3>
+          {/* Step 2: Details */}
+          {(step === 'details' || pool) && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-100">Détails du pool</h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Name */}
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Nom du pool
-                      </label>
-                      <Field
-                        name="name"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Nom du pool
+                  </label>
+                  <Controller
+                    name="name"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
                         type="text"
                         className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
                         placeholder="Ex: Momentum BTC"
                       />
-                      <ErrorMessage name="name" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
+                    )}
+                  />
+                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+                </div>
 
-                    {/* Risk Level */}
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Niveau de risque
-                      </label>
-                      <Field
-                        name="riskLevel"
-                        as="select"
+                {/* Risk Level */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Niveau de risque
+                  </label>
+                  <Controller
+                    name="riskLevel"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
                         className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
                       >
                         <option value="low">Faible</option>
                         <option value="medium">Moyen</option>
                         <option value="high">Élevé</option>
                         <option value="very_high">Très élevé</option>
-                      </Field>
-                      <ErrorMessage name="riskLevel" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
-                  </div>
+                      </select>
+                    )}
+                  />
+                  {errors.riskLevel && <p className="text-red-400 text-xs mt-1">{errors.riskLevel.message}</p>}
+                </div>
+              </div>
 
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Description
-                    </label>
-                    <Field
-                      name="description"
-                      as="textarea"
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Description
+                </label>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <textarea
+                      {...field}
                       rows={3}
                       className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
                       placeholder="Description du pool..."
                     />
-                    <ErrorMessage name="description" component="p" className="text-red-400 text-xs mt-1" />
-                  </div>
+                  )}
+                />
+                {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>}
+              </div>
 
-                  {/* Trading Strategy */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Stratégie de trading
-                    </label>
-                    <Field
-                      name="tradingStrategy"
-                      as="textarea"
+              {/* Trading Strategy */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Stratégie de trading
+                </label>
+                <Controller
+                  name="tradingStrategy"
+                  control={control}
+                  render={({ field }) => (
+                    <textarea
+                      {...field}
                       rows={3}
                       className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
                       placeholder="Détails de la stratégie..."
                     />
-                    <ErrorMessage name="tradingStrategy" component="p" className="text-red-400 text-xs mt-1" />
-                  </div>
-
-                  {/* Amounts */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Montant cible (€)
-                      </label>
-                      <Field
-                        name="targetAmount"
-                        type="number"
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                      />
-                      <ErrorMessage name="targetAmount" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Investissement min (€)
-                      </label>
-                      <Field
-                        name="minInvestment"
-                        type="number"
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                      />
-                      <ErrorMessage name="minInvestment" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Max investisseurs
-                      </label>
-                      <Field
-                        name="maxInvestors"
-                        type="number"
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                      />
-                      <ErrorMessage name="maxInvestors" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
-                  </div>
-
-                  {/* Manager Fee */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Frais manager (%)
-                    </label>
-                    <Field
-                      name="managerFeePercentage"
-                      type="number"
-                      step="0.1"
-                      className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                    />
-                    <ErrorMessage name="managerFeePercentage" component="p" className="text-red-400 text-xs mt-1" />
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Dates */}
-              {(step === 'dates' || pool) && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-100">Dates</h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Date d'ouverture
-                      </label>
-                      <Field
-                        name="startDate"
-                        type="date"
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                      />
-                      <ErrorMessage name="startDate" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Date de fermeture
-                      </label>
-                      <Field
-                        name="endDate"
-                        type="date"
-                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
-                      />
-                      <ErrorMessage name="endDate" component="p" className="text-red-400 text-xs mt-1" />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex justify-between gap-4 pt-6 border-t border-slate-800/50">
-                {step !== 'type' && !pool && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (step === 'details') setStep('type');
-                      else if (step === 'dates') setStep('details');
-                      else if (step === 'advanced') setStep('dates');
-                    }}
-                    className="px-4 py-2 text-slate-300 hover:text-slate-100 transition-colors"
-                  >
-                    ← Précédent
-                  </button>
-                )}
-
-                <div className="flex gap-4 ml-auto">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-6 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-300 hover:text-slate-100 transition-colors"
-                  >
-                    Annuler
-                  </button>
-
-                  {step !== 'advanced' && !pool && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (step === 'type') setStep('details');
-                        else if (step === 'details') setStep('dates');
-                        else if (step === 'dates') setStep('advanced');
-                      }}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors"
-                    >
-                      Suivant →
-                    </button>
                   )}
+                />
+                {errors.tradingStrategy && <p className="text-red-400 text-xs mt-1">{errors.tradingStrategy.message}</p>}
+              </div>
 
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
-                  >
-                    {isLoading ? 'Sauvegarde...' : pool ? 'Mettre à jour' : 'Créer'}
-                  </button>
+              {/* Amounts */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Montant cible (€)
+                  </label>
+                  <Controller
+                    name="targetAmount"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="number"
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                      />
+                    )}
+                  />
+                  {errors.targetAmount && <p className="text-red-400 text-xs mt-1">{errors.targetAmount.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Investissement min (€)
+                  </label>
+                  <Controller
+                    name="minInvestment"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="number"
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                      />
+                    )}
+                  />
+                  {errors.minInvestment && <p className="text-red-400 text-xs mt-1">{errors.minInvestment.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Max investisseurs
+                  </label>
+                  <Controller
+                    name="maxInvestors"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="number"
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                      />
+                    )}
+                  />
+                  {errors.maxInvestors && <p className="text-red-400 text-xs mt-1">{errors.maxInvestors.message}</p>}
                 </div>
               </div>
-            </Form>
+
+              {/* Manager Fee */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Frais manager (%)
+                </label>
+                <Controller
+                  name="managerFeePercentage"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="number"
+                      step="0.1"
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                    />
+                  )}
+                />
+                {errors.managerFeePercentage && <p className="text-red-400 text-xs mt-1">{errors.managerFeePercentage.message}</p>}
+              </div>
+            </div>
           )}
-        </Formik>
+
+          {/* Step 3: Dates */}
+          {(step === 'dates' || pool) && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-slate-100">Dates</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Date d'ouverture
+                  </label>
+                  <Controller
+                    name="startDate"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="date"
+                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                      />
+                    )}
+                  />
+                  {errors.startDate && <p className="text-red-400 text-xs mt-1">{errors.startDate.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Date de fermeture
+                  </label>
+                  <Controller
+                    name="endDate"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="date"
+                        className="w-full px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50"
+                      />
+                    )}
+                  />
+                  {errors.endDate && <p className="text-red-400 text-xs mt-1">{errors.endDate.message}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex justify-between gap-4 pt-6 border-t border-slate-800/50">
+            {step !== 'type' && !pool && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (step === 'details') setStep('type');
+                  else if (step === 'dates') setStep('details');
+                }}
+                className="px-4 py-2 text-slate-300 hover:text-slate-100 transition-colors"
+              >
+                ← Précédent
+              </button>
+            )}
+
+            <div className="flex gap-4 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-300 hover:text-slate-100 transition-colors"
+              >
+                Annuler
+              </button>
+
+              {step !== 'dates' && !pool && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (step === 'type') setStep('details');
+                    else if (step === 'details') setStep('dates');
+                  }}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium transition-colors"
+                >
+                  Suivant →
+                </button>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+              >
+                {isLoading ? 'Sauvegarde...' : pool ? 'Mettre à jour' : 'Créer'}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   );

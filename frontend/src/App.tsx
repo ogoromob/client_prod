@@ -12,6 +12,7 @@ const PoolDetailPage = lazy(() => import('./pages/PoolDetailPage').then(m => ({ 
 
 // Admin pages
 const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })))
+const PoolsManagementPage = lazy(() => import('./pages/admin/PoolsManagementPage').then(m => ({ default: m.default })))
 
 // Protected route component with real authentication check
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ function App() {
         >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="pools" element={<PoolsManagementPage />} />
           {/* More admin routes will be added here */}
         </Route>
 

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../../components/layouts/AdminLayout';
 import PoolModal from '../../components/admin/PoolModal';
 import adminService, { PoolType } from '../../services/adminService';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const PoolsManagementPage: React.FC = () => {
   const [pools, setPools] = useState<PoolType[]>([]);
@@ -19,7 +18,7 @@ const PoolsManagementPage: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await adminService.getPools();
-      setPools(response.data?.data || []);
+      setPools((response as any)?.data || []);
     } catch (error: any) {
       toast.error('Erreur lors du chargement des pools');
       console.error(error);
@@ -142,10 +141,9 @@ const PoolsManagementPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-slate-100">Gestion des Pools</h1>
             <p className="text-slate-400 mt-1">Créez et gérez les pools de trading</p>
@@ -301,7 +299,6 @@ const PoolsManagementPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
 
       {/* Modal */}
       <PoolModal
@@ -313,7 +310,7 @@ const PoolsManagementPage: React.FC = () => {
         onSuccess={loadPools}
         pool={selectedPool}
       />
-    </AdminLayout>
+    </div>
   );
 };
 

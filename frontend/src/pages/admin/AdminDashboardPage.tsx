@@ -19,7 +19,7 @@ import { SkeletonCard, SkeletonTable } from '@/components/ui/Skeleton';
 import { Alert } from '@/components/ui/Alert';
 import { fadeInUp, staggerContainer } from '@/components/ui/animation';
 import { formatCurrencyWithColor, formatPercentageWithColor } from '@/theme/utils';
-import { adminService } from '@/services/adminService';
+import adminService from '@/services/adminService';
 
 interface AdminStats {
   totalUsers: number;
@@ -49,15 +49,15 @@ export function AdminDashboardPage() {
       setIsLoading(true);
       
       // Fetch admin dashboard data
-      const dashboardData = await adminService.getDashboardMetrics();
+      const dashboardData = await adminService.getDashboard() as any;
       
       setStats({
-        totalUsers: dashboardData.totalInvestors || 0,
-        totalPools: dashboardData.totalPools || 0,
-        totalAUM: dashboardData.totalAUM || 0,
-        totalPnL: dashboardData.totalPnL || 0,
-        pendingWithdrawals: dashboardData.pendingWithdrawals || 0,
-        activeInvestors: dashboardData.activePools || 0,
+        totalUsers: dashboardData?.data?.totalInvestors || 0,
+        totalPools: dashboardData?.data?.totalPools || 0,
+        totalAUM: dashboardData?.data?.totalAUM || 0,
+        totalPnL: dashboardData?.data?.totalPnL || 0,
+        pendingWithdrawals: dashboardData?.data?.pendingWithdrawals || 0,
+        activeInvestors: dashboardData?.data?.activePools || 0,
       });
 
       // Mock alerts for now
