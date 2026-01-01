@@ -21,6 +21,15 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Post('seed-admin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Seed admin user (development only)' })
+  async seedAdmin() {
+    const result = await this.authService.seedAdminUser();
+    return createSuccessResponse(result);
+  }
+
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   async register(@Body() registerDto: RegisterDto) {

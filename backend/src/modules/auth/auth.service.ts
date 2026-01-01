@@ -261,6 +261,9 @@ export class AuthService {
 
       await this.userRepository.save(admin);
       console.log('✅ Admin user created successfully');
+      return { message: 'Admin user created successfully', email: adminEmail };
+    } else {
+      return { message: 'Admin user already exists', email: adminEmail };
     }
   }
 }
