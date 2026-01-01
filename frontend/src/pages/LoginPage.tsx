@@ -1,10 +1,7 @@
-// src/pages/LoginPage.tsx
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
+import { Loader2, Eye, EyeOff, ShieldCheck, Zap, TrendingUp } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -13,14 +10,13 @@ export function LoginPage() {
   const { login, setLoading } = useAuthStore();
   
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: 'sesshomaru@admin.com',
+    password: 'inyasha',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  // Validation
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
     
@@ -40,7 +36,6 @@ export function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -57,16 +52,13 @@ export function LoginPage() {
         password: formData.password,
       });
       
-      // Sauvegarder dans le store
       login(user, tokens.accessToken, tokens.refreshToken);
       
-      // Notification de succès
       toast.success('Connexion réussie', {
         description: `Bienvenue ${user.email}`,
-        icon: <ShieldCheck className="h-5 w-5 text-green-500" />,
+        icon: <ShieldCheck className="h-5 w-5 text-emerald-400" />,
       });
       
-      // Redirection selon le rôle
       if (user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
@@ -84,126 +76,190 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-dark-900 to-dark-950 p-4">
-      <Card className="w-full max-w-md" glass>
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">Connexion</CardTitle>
-          <p className="text-center text-gray-400 text-sm mt-2">
-            Accédez à votre plateforme de trading
-          </p>
-        </CardHeader>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 relative overflow-hidden flex items-center justify-center p-4">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Gradient orbs */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
         
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {/* Email */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-300">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="sesshomaru@admin.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={`w-full bg-dark-800 border rounded-md p-2 text-white focus:ring-2 focus:outline-none transition-colors ${
-                  errors.email 
-                    ? 'border-red-500 focus:ring-red-500' 
-                    : 'border-gray-700 focus:ring-primary-500 focus:border-primary-500'
-                }`}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email}</p>
-              )}
-            </div>
+        {/* Grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">
-                Mot de passe
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={`w-full bg-dark-800 border rounded-md p-2 pr-10 text-white focus:ring-2 focus:outline-none transition-colors ${
-                    errors.password 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-700 focus:ring-primary-500 focus:border-primary-500'
-                  }`}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
-                  disabled={isLoading}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-12 animate-fade-in">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg blur-lg opacity-75 animate-pulse" />
+              <div className="relative bg-gradient-to-br from-blue-600 to-cyan-600 p-3 rounded-lg">
+                <Zap className="h-6 w-6 text-white" />
               </div>
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password}</p>
-              )}
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              TradingPool
+            </h1>
+          </div>
+          <p className="text-slate-400 text-sm font-medium">Plateforme de Trading Avancée</p>
+        </div>
+
+        {/* Login Card */}
+        <div className="relative group animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          {/* Card glow effect */}
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 animate-pulse" />
+          
+          {/* Card */}
+          <div className="relative bg-slate-900/80 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-8 shadow-2xl">
+            {/* Card header */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-2">Connexion</h2>
+              <p className="text-slate-400 text-sm">Accédez à votre plateforme de trading</p>
             </div>
 
-            {/* Remember & Forgot */}
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center space-x-2 text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-700 bg-dark-800 text-primary-500 focus:ring-primary-500"
-                  disabled={isLoading}
-                />
-                <span>Se souvenir de moi</span>
-              </label>
-              <Link to="#" className="text-primary-500 hover:underline">
-                Mot de passe oublié ?
-              </Link>
-            </div>
-          </CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Input */}
+              <div className="space-y-2 group/input">
+                <label htmlFor="email" className="text-sm font-semibold text-slate-300 block">
+                  Email
+                </label>
+                <div className="relative">
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="sesshomaru@admin.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={`w-full bg-slate-800/50 backdrop-blur-sm border rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none transition-all duration-300 ${
+                      errors.email 
+                        ? 'border-red-500/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' 
+                        : 'border-slate-700/50 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20'
+                    }`}
+                    disabled={isLoading}
+                  />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/0 via-cyan-500/0 to-blue-500/0 group-focus-within/input:from-cyan-500/10 group-focus-within/input:via-cyan-500/5 group-focus-within/input:to-blue-500/10 pointer-events-none transition-all duration-300" />
+                </div>
+                {errors.email && (
+                  <p className="text-xs text-red-400 font-medium">{errors.email}</p>
+                )}
+              </div>
 
-          <CardFooter className="flex flex-col items-center space-y-4">
-            <Button 
-              type="submit"
-              className="w-full" 
-              size="lg"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Connexion en cours...
-                </>
-              ) : (
-                'Se connecter'
-              )}
-            </Button>
-            
-            <p className="text-sm text-gray-400">
+              {/* Password Input */}
+              <div className="space-y-2 group/input">
+                <label htmlFor="password" className="text-sm font-semibold text-slate-300 block">
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className={`w-full bg-slate-800/50 backdrop-blur-sm border rounded-lg px-4 py-3 pr-12 text-white placeholder-slate-500 focus:outline-none transition-all duration-300 ${
+                      errors.password 
+                        ? 'border-red-500/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20' 
+                        : 'border-slate-700/50 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20'
+                    }`}
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                    disabled={isLoading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-cyan-500/0 via-cyan-500/0 to-blue-500/0 group-focus-within/input:from-cyan-500/10 group-focus-within/input:via-cyan-500/5 group-focus-within/input:to-blue-500/10 pointer-events-none transition-all duration-300" />
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-red-400 font-medium">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Remember & Forgot */}
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center space-x-2 text-slate-400 cursor-pointer hover:text-slate-300 transition-colors">
+                  <input
+                    type="checkbox"
+                    className="rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/20"
+                    disabled={isLoading}
+                  />
+                  <span>Se souvenir de moi</span>
+                </label>
+                <Link to="#" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">
+                  Mot de passe oublié ?
+                </Link>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full relative group/btn mt-8"
+              >
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg blur opacity-75 group-hover/btn:opacity-100 transition duration-300 group-disabled/btn:opacity-50" />
+                <div className="relative px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-semibold text-white flex items-center justify-center gap-2 group-hover/btn:from-cyan-500 group-hover/btn:to-blue-500 transition-all duration-300">
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Connexion en cours...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="h-5 w-5" />
+                      Se connecter
+                    </>
+                  )}
+                </div>
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-700/50" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-slate-900/80 text-slate-400">ou</span>
+              </div>
+            </div>
+
+            {/* Demo Info */}
+            <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg p-4 text-center">
+              <p className="text-xs text-slate-400 mb-2">
+                <strong className="text-cyan-400">Démo disponible :</strong>
+              </p>
+              <p className="text-sm font-mono text-slate-300">
+                sesshomaru@admin.com
+              </p>
+              <p className="text-sm font-mono text-slate-300">
+                inyasha
+              </p>
+            </div>
+
+            {/* Footer */}
+            <p className="text-center text-sm text-slate-400 mt-6">
               Pas encore de compte ?{' '}
-              <Link to="/register" className="text-primary-500 hover:underline">
+              <Link to="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold transition-colors">
                 S'inscrire
               </Link>
             </p>
+          </div>
+        </div>
 
-            {/* Demo credentials hint */}
-            <div className="w-full p-3 bg-dark-800/50 rounded-lg border border-gray-700">
-              <p className="text-xs text-gray-400 text-center">
-                <strong className="text-gray-300">Demo:</strong> sesshomaru@admin.com / inyasha
-              </p>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+        {/* Bottom decoration */}
+        <div className="mt-12 text-center text-xs text-slate-500">
+          <p>Plateforme sécurisée • Authentification JWT • Données chiffrées</p>
+        </div>
+      </div>
     </div>
   );
 }
