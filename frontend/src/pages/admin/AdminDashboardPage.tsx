@@ -20,6 +20,7 @@ import { Alert } from '@/components/ui/Alert';
 import { fadeInUp, staggerContainer } from '@/components/ui/animation';
 import { formatCurrencyWithColor, formatPercentageWithColor } from '@/theme/utils';
 import adminService from '@/services/adminService';
+import PendingInvestmentsCard from '@/components/admin/PendingInvestmentsCard';
 
 interface AdminStats {
   totalUsers: number;
@@ -333,6 +334,11 @@ export function AdminDashboardPage() {
             </table>
           </div>
         )}
+      </motion.div>
+
+      {/* Pending Investments Section */}
+      <motion.div variants={fadeInUp}>
+        <PendingInvestmentsCard onRefresh={handleRefresh} />
       </motion.div>
     </motion.div>
   );

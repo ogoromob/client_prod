@@ -127,4 +127,95 @@ export class InvestmentService {
     
     return history;
   }
+
+  async confirm(id: string, userId: string): Promise<InvestmentEntity> {
+    const investment = await this.findOne(id, userId);
+    
+    if (investment.status !== InvestmentStatus.PENDING) {
+      throw new BadRequestException('Cet investissement ne peut pas être confirmé');
+    }
+
+    investment.status = InvestmentStatus.CONFIRMED;
+    investment.confirmedAt = new Date();
+    return await this.investmentRepository.save(investment);
+  }
+
+  async reject(id: string, userId: string, reason?: string): Promise<InvestmentEntity> {
+    const investment = await this.findOne(id, userId);
+    
+    if (investment.status !== InvestmentStatus.PENDING) {
+      throw new BadRequestException('Cet investissement ne peut pas être rejeté');
+    }
+
+    investment.status = InvestmentStatus.REJECTED;
+    investment.rejectedAt = new Date();
+    investment.rejectionReason = reason || null;
+
+    // Rembourser l'utilisateur
+    const pool = await this.poolRepository.findOne({ where: { id: investment.poolId } });
+    if (pool) {
+      pool.currentAmount = Number(pool.currentAmount) - Number(investment.initialAmount);
+      pool.totalInvested = Number(pool.totalInvested) - Number(investment.initialAmount);
+      await this.poolRepository.save(pool);
+    }
+
+    return await this.investmentRepository.save(investment);
+  }
+
+  async getPendingInvestments(): Promise<InvestmentEntity[]> {
+    return await this.investmentRepository.find({
+      where: { status: InvestmentStatus.PENDING },
+      relations: ['user', 'pool'],
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async getAllInvestments(): Promise<InvestmentEntity[]> {
+    return await this.investmentRepository.find({
+      relations: ['user', 'pool'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async approveInvestment(id: string): Promise<InvestmentEntity> {
+    const investment = await this.investmentRepository.findOne({ where: { id } });
+    
+    if (!investment) {
+      throw new NotFoundException('Investissement non trouvé');
+    }
+
+    if (investment.status !== InvestmentStatus.PENDING) {
+      throw new BadRequestException('Cet investissement ne peut pas être approuvé');
+    }
+
+    investment.status = InvestmentStatus.CONFIRMED;
+    investment.confirmedAt = new Date();
+    return await this.investmentRepository.save(investment);
+  }
+
+  async rejectInvestmentAdmin(id: string, reason: string): Promise<InvestmentEntity> {
+    const investment = await this.investmentRepository.findOne({ where: { id } });
+    
+    if (!investment) {
+      throw new NotFoundException('Investissement non trouvé');
+    }
+
+    if (investment.status !== InvestmentStatus.PENDING) {
+      throw new BadRequestException('Cet investissement ne peut pas être rejeté');
+    }
+
+    investment.status = InvestmentStatus.REJECTED;
+    investment.rejectedAt = new Date();
+    investment.rejectionReason = reason;
+
+    // Rembourser l'utilisateur
+    const pool = await this.poolRepository.findOne({ where: { id: investment.poolId } });
+    if (pool) {
+      pool.currentAmount = Number(pool.currentAmount) - Number(investment.initialAmount);
+      pool.totalInvested = Number(pool.totalInvested) - Number(investment.initialAmount);
+      await this.poolRepository.save(pool);
+    }
+
+    return await this.investmentRepository.save(investment);
+  }
 }

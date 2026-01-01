@@ -6,6 +6,7 @@ import { WithdrawalEntity } from './withdrawal.entity';
 export enum InvestmentStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
+  REJECTED = 'rejected',
   LOCKED = 'locked',
   WITHDRAWABLE = 'withdrawable',
   WITHDRAWAL_PENDING = 'withdrawal_pending',
@@ -57,10 +58,19 @@ export class InvestmentEntity {
   investedAt: Date;
 
   @Column({ nullable: true })
+  confirmedAt: Date;
+
+  @Column({ nullable: true })
+  rejectedAt: Date;
+
+  @Column({ nullable: true })
   lockedUntil: Date;
 
   @Column({ nullable: true })
   withdrawnAt: Date;
+
+  @Column({ nullable: true })
+  rejectionReason: string | null;
 
   // Payment info
   @Column({ nullable: true })
