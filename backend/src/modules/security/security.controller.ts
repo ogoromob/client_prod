@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, UseGuards, Req, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, UseGuards, Req, Param, Body, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -61,5 +61,3 @@ export class SecurityController {
     return this.securityService.getLoginHistory(req.user.id, limit);
   }
 }
-
-import { Query } from '@nestjs/common';
