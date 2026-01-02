@@ -1,21 +1,46 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, Eye, EyeOff, ShieldCheck, Zap, TrendingUp } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ShieldCheck, Zap, TrendingUp, Copy, Check } from 'lucide-react';
 import { authService } from '@/services/authService';
 import { useAuthStore } from '@/stores/authStore';
+
+const TEST_ACCOUNTS = [
+  {
+    name: 'Super Admin',
+    email: 'superadmin@tradingpool.com',
+    password: 'SuperAdmin@2024',
+    role: 'SUPER_ADMIN',
+    description: 'Accès complet à toutes les fonctionnalités',
+  },
+  {
+    name: 'Admin',
+    email: 'admin@tradingpool.com',
+    password: 'Admin@2024',
+    role: 'ADMIN',
+    description: 'Gestion des pools et utilisateurs',
+  },
+  {
+    name: 'Investor',
+    email: 'investor@tradingpool.com',
+    password: 'Investor@2024',
+    role: 'INVESTOR',
+    description: 'Accès utilisateur standard',
+  },
+];
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { login, setLoading } = useAuthStore();
   
   const [formData, setFormData] = useState({
-    email: 'sesshomaru@admin.com',
-    password: 'inyasha',
+    email: 'superadmin@tradingpool.com',
+    password: 'SuperAdmin@2024',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -228,21 +253,38 @@ export function LoginPage() {
                 <div className="w-full border-t border-slate-700/50" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-slate-900/80 text-slate-400">ou</span>
+                <span className="px-2 bg-slate-900/80 text-slate-400">Comptes de Test</span>
               </div>
             </div>
 
-            {/* Demo Info */}
-            <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg p-4 text-center">
-              <p className="text-xs text-slate-400 mb-2">
-                <strong className="text-cyan-400">Démo disponible :</strong>
-              </p>
-              <p className="text-sm font-mono text-slate-300">
-                sesshomaru@admin.com
-              </p>
-              <p className="text-sm font-mono text-slate-300">
-                inyasha
-              </p>
+            {/* Test Accounts */}
+            <div className="space-y-3 mb-6">
+              {TEST_ACCOUNTS.map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      email: account.email,
+                      password: account.password,
+                    });
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-slate-700/50 bg-slate-800/30 hover:bg-slate-800/60 hover:border-cyan-500/50 transition-all duration-300 group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-white group-hover:text-cyan-400 transition-colors">
+                        {account.name}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">{account.description}</p>
+                      <p className="text-xs font-mono text-slate-500 mt-2">{account.email}</p>
+                    </div>
+                    <div className="text-xs font-semibold px-2 py-1 rounded bg-slate-700/50 text-slate-300 group-hover:bg-cyan-500/20 group-hover:text-cyan-400 transition-all">
+                      {account.role}
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
 
             {/* Footer */}

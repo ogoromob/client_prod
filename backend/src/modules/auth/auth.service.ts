@@ -243,8 +243,8 @@ export class AuthService {
   // Seed test users on startup
   async seedAdminUser() {
     try {
-      // Create Super Admin
-      const superAdminEmail = 'admin@tradingpool.com';
+      // 1. Create Super Admin
+      const superAdminEmail = 'superadmin@tradingpool.com';
       const superAdminPassword = 'SuperAdmin@2024';
       
       const existingSuperAdmin = await this.userRepository.findOne({
@@ -264,21 +264,45 @@ export class AuthService {
           totalInvestedAmount: 0,
         });
         await this.userRepository.save(superAdmin);
-        console.log('✅ Super Admin created: admin@tradingpool.com / SuperAdmin@2024');
+        console.log('✅ Super Admin created: superadmin@tradingpool.com / SuperAdmin@2024');
       }
 
-      // Create Regular User
-      const userEmail = 'investor@tradingpool.com';
-      const userPassword = 'Investor@2024';
+      // 2. Create Admin
+      const adminEmail = 'admin@tradingpool.com';
+      const adminPassword = 'Admin@2024';
       
-      const existingUser = await this.userRepository.findOne({
-        where: { email: userEmail },
+      const existingAdmin = await this.userRepository.findOne({
+        where: { email: adminEmail },
       });
 
-      if (!existingUser) {
-        const passwordHash = await bcrypt.hash(userPassword, 12);
-        const user = this.userRepository.create({
-          email: userEmail,
+      if (!existingAdmin) {
+        const passwordHash = await bcrypt.hash(adminPassword, 12);
+        const admin = this.userRepository.create({
+          email: adminEmail,
+          passwordHash,
+          role: UserRole.ADMIN,
+          mfaEnabled: false,
+          kycStatus: KycStatus.APPROVED,
+          hasActiveSubscription: true,
+          subscriptionExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          totalInvestedAmount: 0,
+        });
+        await this.userRepository.save(admin);
+        console.log('✅ Admin created: admin@tradingpool.com / Admin@2024');
+      }
+
+      // 3. Create Investor
+      const investorEmail = 'investor@tradingpool.com';
+      const investorPassword = 'Investor@2024';
+      
+      const existingInvestor = await this.userRepository.findOne({
+        where: { email: investorEmail },
+      });
+
+      if (!existingInvestor) {
+        const passwordHash = await bcrypt.hash(investorPassword, 12);
+        const investor = this.userRepository.create({
+          email: investorEmail,
           passwordHash,
           role: UserRole.INVESTOR,
           mfaEnabled: false,
@@ -287,7 +311,7 @@ export class AuthService {
           subscriptionExpiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
           totalInvestedAmount: 0,
         });
-        await this.userRepository.save(user);
+        await this.userRepository.save(investor);
         console.log('✅ Investor created: investor@tradingpool.com / Investor@2024');
       }
 
@@ -295,7 +319,8 @@ export class AuthService {
         message: 'Test users seeded successfully',
         accounts: [
           { email: superAdminEmail, password: superAdminPassword, role: 'SUPER_ADMIN' },
-          { email: userEmail, password: userPassword, role: 'INVESTOR' }
+          { email: adminEmail, password: adminPassword, role: 'ADMIN' },
+          { email: investorEmail, password: investorPassword, role: 'INVESTOR' }
         ]
       };
     } catch (error) {
